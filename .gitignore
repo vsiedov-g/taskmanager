@@ -1,0 +1,173 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.vs/
+*.swp
+*.swo
+*~
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Backend (.NET)
+backend/bin/
+backend/obj/
+backend/packages/
+backend/.vs/
+backend/TestResults/
+backend/coverage/
+backend/**/bin/
+backend/**/obj/
+backend/**/*.user
+backend/**/*.cache
+*.user
+*.suo
+*.cache
+*.docstates
+*.sln.docstates
+*.userprefs
+*.pidb
+*.log
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.vspscc
+*.vssscc
+.builds
+*.dotCover
+*.ncrunch*
+_TeamCity*
+*.resharper*
+*.DotSettings.user
+**/launchSettings.json
+
+# Frontend (Angular/Node.js)
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/tmp/
+frontend/out-tsc/
+frontend/bazel-out/
+frontend/coverage/
+frontend/.nyc_output/
+frontend/.sass-cache/
+frontend/connect.lock/
+frontend/typings/
+frontend/**/.angular/
+frontend/**/node_modules/
+frontend/**/dist/
+frontend/**/.tmp/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+yarn.lock
+
+# Docker
+docker-compose.override.yml
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output/
+
+# Grunt intermediate storage
+.grunt/
+
+# Bower dependency directory
+bower_components/
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release/
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Secrets
+secrets/
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+
+# Additional common build/dependency folders
+**/bin/
+**/obj/
+**/packages/
+**/node_modules/
+**/.angular/
+**/dist/
+**/coverage/
+**/.vs/
+**/.vscode/settings.json
+**/.idea/
+
+# Lock files (keep one, usually package-lock.json)
+# yarn.lock (already added above)
+
+# Angular specific
+.angular/
+*.tsbuildinfo
+
+# JetBrains
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Windows
+Desktop.ini
+$RECYCLE.BIN/

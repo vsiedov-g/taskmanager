@@ -1,0 +1,66 @@
+# Docker Compose for Task Manager - Basic Development Setup
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: taskmanager_postgres
+    environment:
+      POSTGRES_DB: taskmanager
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - taskmanager_network
+    restart: unless-stopped
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: taskmanager_backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/taskmanager
+      - CORS_ORIGINS=http://localhost:4200
+    ports:
+      - "5000:80"
+    volumes:
+      - ./backend/src:/app/src
+    depends_on:
+      - postgres
+    networks:
+      - taskmanager_network
+    restart: unless-stopped
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: taskmanager_frontend
+    environment:
+      - NODE_ENV=development
+      - API_BASE_URL=http://localhost:5000
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend/src:/app/src
+    depends_on:
+      - backend
+    networks:
+      - taskmanager_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  taskmanager_network:
+    driver: bridge
