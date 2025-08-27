@@ -19,7 +19,9 @@
       "Bash(git commit:*)",
       "Bash(del \".env.example\")",
       "Bash(docker:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm start)",
+      "Bash(ng serve:*)"
     ],
     "deny": [],
     "ask": []

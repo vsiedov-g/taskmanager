@@ -1,0 +1,24 @@
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+:host {
+  display: block;
+}
+
+.task-card {
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+select {
+  &:focus {
+    outline: none;
+  }
+}

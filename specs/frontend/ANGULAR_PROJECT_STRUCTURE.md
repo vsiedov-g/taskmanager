@@ -1,7 +1,7 @@
 # Angular Project Structure Guide
 
 ## Overview
-This Angular 20+ project follows a feature-based architecture using standalone components, NgRx for state management, and TailwindCSS for styling. The project is structured for scalability and maintainability with clean separation of concerns.
+This Angular 20+ project follows a feature-based architecture using standalone components, NgRx for state management, and TailwindCSS for styling. The project is structured for scalability and maintainability.
 
 ## Technology Stack
 - **Angular**: 20.0.0
@@ -106,6 +106,74 @@ feature-name/
     ├── effects/
     ├── reducers/
     └── selectors/
+```
+
+#### Example Features
+
+**Dashboard Feature (`features/dashboard/`)**
+```
+dashboard/
+├── dashboard.config.ts         # Dashboard providers
+├── dashboard.routes.ts         # Dashboard routing
+├── components/
+│   ├── alert/                  # Alert component
+│   ├── card/                   # Card component
+│   └── profit-loss-chart/      # Chart component
+├── pages/
+│   ├── dashboard/              # Main dashboard page
+│   └── insight/                # Insight detail page
+├── models/
+│   ├── financial-overview.model.ts
+│   ├── quarter-profit.model.ts
+│   └── alert.model.ts
+├── services/
+│   ├── dashboard.service.ts    # Dashboard API service
+│   └── pdf_exporter.service.ts # Export service
+├── pipes/
+│   ├── absolute-percent.pipe.ts
+│   └── short-currency.pipe.ts
+└── store/                      # Dashboard NgRx state
+    ├── dashboard.actions.ts
+    ├── dashboard.effects.ts
+    ├── dashboard.reducer.ts
+    ├── dashboard.selectors.ts
+    └── insight/                # Sub-feature state
+        ├── insight.actions.ts
+        ├── insight.effects.ts
+        ├── insight.reducer.ts
+        └── insight.selectors.ts
+```
+
+**Income-Expenses Feature (`features/income-expenses/`)**
+```
+income-expenses/
+├── income-expenses.config.ts   # Complex feature configuration
+├── income-expenses.routes.ts   # Feature routing
+├── components/                 # Reusable components
+│   ├── ai-insights-grid/
+│   ├── expense-spikes-chart/
+│   ├── income-expenses-grid/
+│   ├── invoice-preview/
+│   └── submit-transaction/
+├── pages/                      # Feature pages
+│   ├── income-expenses-main/
+│   ├── income-expenses-page/
+│   ├── profit-loss-page/
+│   └── ai-insights-page/
+├── models/                     # Domain models
+│   ├── transaction.model.ts
+│   ├── transaction.enum.ts
+│   └── charts/                 # Chart-specific models
+├── services/                   # Business services
+└── store/                      # Complex state structure
+    ├── actions/                # Modal actions
+    ├── effects/                # Modal effects
+    ├── reducers/               # Modal reducers
+    ├── selectors/              # Modal selectors
+    ├── expenses/               # Grid state
+    ├── insights/               # AI insights state
+    ├── forecast/               # Forecast state
+    └── charts/                 # Charts state
 ```
 
 ### Layout Directory (`layout/`)
@@ -388,6 +456,28 @@ export const environment = {
 - `karma.conf.js` - Test runner configuration
 - Jasmine framework for testing
 
+## Development Tools
+
+### Build Scripts
+```json
+{
+  "start": "ng serve",
+  "build": "ng build",
+  "test": "ng test",
+  "lint": "eslint . --ext .ts,.html",
+  "lint:fix": "eslint . --ext .ts,.html --fix",
+  "format": "prettier --write \"src/**/*.{ts,html,scss,css,json}\"",
+  "storybook": "ng run frontend:storybook"
+}
+```
+
+### Development Features
+- **Hot reload**: Development server with live reloading
+- **ESLint**: Code linting and formatting
+- **Prettier**: Code formatting
+- **Storybook**: Component documentation and testing
+- **NgRx DevTools**: State debugging in development
+
 ## Key Architectural Patterns
 
 1. **Feature-based organization**: Each feature is self-contained
@@ -400,22 +490,5 @@ export const environment = {
 8. **Responsive design**: Mobile-first with TailwindCSS
 9. **Testing**: Unit tests for all components and services
 10. **Documentation**: Storybook for component library
-
-## List Management Requirements
-
-### List Creation and Management
-- Users can create, edit, and delete Lists
-- When the board is empty, show a placeholder column with header "Add another list" and a "+" button
-- Clicking "+" creates a new List with the ability to enter its Name
-- Lists can be edited via a context menu; the Name becomes editable with Save/Cancel buttons
-- When a List is deleted, all Cards within that List must also be deleted
-- A placeholder "Add another list" with a "+" button should always be present at the end
-
-### List Display and Ordering
-- Each List header should display the number of Cards it contains
-- Cards inside a List should be ordered primarily by:
-  1. Due Date (descending, nulls last)
-  2. Priority (High → Low) 
-  3. CreatedAt (descending)
 
 This structure provides a scalable, maintainable, and modern Angular application architecture suitable for enterprise-level applications.

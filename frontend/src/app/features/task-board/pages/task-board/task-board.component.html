@@ -1,0 +1,107 @@
+<!-- Task Board Layout -->
+<div class="h-screen bg-gray-50 p-6 flex flex-col">
+  <!-- Header -->
+  <div class="mb-6 flex items-center justify-between flex-shrink-0">
+    <h1 class="text-3xl font-bold text-gray-900">My Task Board</h1>
+    <button class="flex items-center space-x-2 rounded-md bg-white px-4 py-2 shadow-sm border border-gray-200 hover:bg-gray-50">
+      <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span class="text-gray-700">History</span>
+    </button>
+  </div>
+
+  <!-- Kanban Board -->
+  <div class="flex gap-4 flex-1 overflow-x-auto">
+    <!-- Existing Task Columns -->
+    @for (column of taskColumns$ | async; track column.id) {
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full w-72 flex-shrink-0">
+        <!-- Column Header -->
+        <div class="p-4 border-b border-gray-200 flex-shrink-0">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="font-semibold text-gray-900">{{ column.title }}</h2>
+            <div class="flex items-center space-x-2">
+              <span class="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded-full">{{ column.count }}</span>
+              <button class="text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add New Card Button -->
+        <div class="p-4 border-b border-gray-100 flex-shrink-0">
+          <button 
+            class="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 flex items-center justify-center transition-colors"
+            (click)="onAddNewCard(column.id)">
+            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Add new card
+          </button>
+        </div>
+
+        <!-- Task Cards -->
+        <div class="p-4 space-y-3 flex-1 overflow-y-auto">
+          @for (task of column.tasks; track task.id) {
+            <app-task-card 
+              [task]="task"
+              [availableStatuses]="getAvailableStatuses(task.status)"
+              (statusChanged)="onTaskStatusChanged($event)">
+            </app-task-card>
+          }
+          
+          @empty {
+            <div class="text-center py-8 text-gray-500">
+              <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p class="text-sm">No tasks in this column</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Add Another List Section -->
+    <div class="w-72 flex-shrink-0">
+      @if (!isAddingNewList) {
+        <!-- Add List Button -->
+        <button 
+          class="w-full h-16 bg-white bg-opacity-60 hover:bg-opacity-80 rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-400 flex items-center justify-center transition-colors text-gray-600 hover:text-gray-800"
+          (click)="onStartAddingList()">
+          <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          <span class="font-medium">Add another list</span>
+        </button>
+      } @else {
+        <!-- Add List Form -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <input
+            type="text"
+            [(ngModel)]="newListTitle"
+            placeholder="Enter list title..."
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-3"
+            (keydown)="onNewListKeydown($event)"
+            #listTitleInput>
+          
+          <div class="flex space-x-2">
+            <button
+              (click)="onSaveNewList()"
+              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors">
+              Add list
+            </button>
+            <button
+              (click)="onCancelAddingList()"
+              class="px-4 py-2 text-gray-600 hover:text-gray-800 focus:outline-none transition-colors">
+              Cancel
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

@@ -1,0 +1,40 @@
+:host {
+  display: block;
+  height: 100vh;
+}
+
+// Custom scrollbar styles for task cards container
+:host ::ng-deep .flex-1.overflow-y-auto {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}
+
+.add-card-button {
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+@media (max-width: 768px) {
+  :host {
+    height: auto;
+    min-height: 100vh;
+  }
+}
