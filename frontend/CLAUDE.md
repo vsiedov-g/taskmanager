@@ -401,6 +401,77 @@ export const environment = {
 9. **Testing**: Unit tests for all components and services
 10. **Documentation**: Storybook for component library
 
+## Dependency Injection Requirements
+
+### **MANDATORY: Always use `inject()` function**
+- **NEVER use constructor dependency injection**
+- **ALWAYS use the `inject()` function for all service dependencies**
+- This applies to components, services, guards, effects, and all other Angular classes
+
+#### ✅ Correct Pattern:
+```typescript
+@Component({
+  selector: 'app-example',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './example.component.html'
+})
+export class ExampleComponent {
+  private store = inject(Store);
+  private router = inject(Router);
+  private apiService = inject(ApiService);
+  
+  // Component logic here
+}
+```
+
+#### ❌ Incorrect Pattern (DO NOT USE):
+```typescript
+@Component({
+  selector: 'app-example',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './example.component.html'
+})
+export class ExampleComponent {
+  constructor(
+    private store: Store,
+    private router: Router,
+    private apiService: ApiService
+  ) {} // NEVER use constructor injection
+}
+```
+
+#### Service Example:
+```typescript
+@Injectable({ providedIn: 'root' })
+export class ExampleService {
+  private http = inject(HttpClient);
+  private config = inject(CONFIG_TOKEN);
+  
+  // Service methods here
+}
+```
+
+#### Effects Example:
+```typescript
+@Injectable()
+export class ExampleEffects {
+  private actions$ = inject(Actions);
+  private service = inject(ExampleService);
+  private store = inject(Store);
+  
+  // Effects here
+}
+```
+
+### Benefits of `inject()`:
+- **Cleaner code**: No constructor boilerplate
+- **Better tree-shaking**: More efficient bundling
+- **Conditional injection**: Can be used conditionally
+- **Modern Angular**: Aligns with latest Angular patterns
+- **Functional style**: Supports functional programming approaches
+
 ## List Management Requirements
 
 ### List Creation and Management

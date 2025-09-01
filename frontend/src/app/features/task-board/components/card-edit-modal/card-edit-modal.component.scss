@@ -1,0 +1,167 @@
+// Modal backdrop with blur effect
+.modal-backdrop {
+  backdrop-filter: blur(2px);
+}
+
+// Enhanced form styling
+input,
+textarea,
+select {
+  font-size: 14px;
+  line-height: 1.5;
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+  }
+  
+  &::placeholder {
+    color: #9ca3af;
+  }
+}
+
+// Date input specific styling
+input[type="date"] {
+  color-scheme: light;
+  
+  &::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.5);
+  }
+}
+
+// Select dropdown styling
+select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  
+  &:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%233b82f6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  }
+}
+
+// Smooth transitions
+input,
+textarea,
+select,
+button {
+  transition: all 0.15s ease-in-out;
+}
+
+// Button styling enhancements
+button {
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+// Modal container shadow
+.bg-white.rounded-xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+// Form validation error styling
+.border-red-300 {
+  border-color: #fca5a5 !important;
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1) !important;
+    border-color: #ef4444 !important;
+  }
+}
+
+// Grid gap consistency
+.grid-cols-2 {
+  align-items: start;
+}
+
+// Label styling
+label {
+  font-weight: 500;
+  color: #374151;
+}
+
+// Priority badge styling
+.inline-flex.items-center.px-2\.5 {
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+// Description box styling
+.bg-gray-50.rounded-lg.p-4 {
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  
+  p {
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+// Move dropdown styling
+.absolute.left-0.mt-2 {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  button {
+    font-weight: 400;
+    
+    &:hover {
+      background-color: #f9fafb;
+    }
+    
+    &.bg-blue-50 {
+      background-color: #eff6ff;
+      font-weight: 500;
+    }
+  }
+}
+
+// Edit form section styling
+.border-t.pt-6 {
+  border-color: #e5e7eb;
+}
+
+// Action buttons spacing and styling
+.flex.space-x-3 {
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    
+    svg {
+      flex-shrink: 0;
+    }
+  }
+}
+
+// Delete button hover states
+.text-red-700.bg-red-50 {
+  &:hover {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+  }
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 640px) {
+  .grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  
+  .flex.space-x-4 {
+    flex-direction: column;
+    space-x: 0;
+    
+    > * + * {
+      margin-top: 0.5rem;
+      margin-left: 0;
+    }
+  }
+}

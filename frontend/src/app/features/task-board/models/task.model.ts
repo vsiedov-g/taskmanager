@@ -1,30 +1,30 @@
 export interface Task {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   status: TaskStatus;
   priority: TaskPriority;
-  dueDate: string;
+  dueDate?: string;
   assigneeId?: string;
   assigneeName?: string;
   createdAt: string;
   updatedAt: string;
   projectId?: string;
-  listId?: string;
+  listId: string;
+  position: number;
 }
 
 export enum TaskStatus {
-  TODO = 'todo',
-  PLANNED = 'planned',
-  IN_PROGRESS = 'inprogress',
-  CLOSED = 'closed'
+  Todo = 0,
+  InProgress = 1,
+  Done = 2
 }
 
 export enum TaskPriority {
-  LOW = 'Low',
-  MEDIUM = 'Medium',
-  HIGH = 'High',
-  CRITICAL = 'Critical'
+  Low = 0,
+  Medium = 1,
+  High = 2,
+  Critical = 3
 }
 
 export interface TaskColumn {

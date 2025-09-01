@@ -3,105 +3,249 @@
   <!-- Header -->
   <div class="mb-6 flex items-center justify-between flex-shrink-0">
     <h1 class="text-3xl font-bold text-gray-900">My Task Board</h1>
-    <button class="flex items-center space-x-2 rounded-md bg-white px-4 py-2 shadow-sm border border-gray-200 hover:bg-gray-50">
-      <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span class="text-gray-700">History</span>
-    </button>
+    <div class="flex items-center space-x-4">
+      <button 
+        class="flex items-center space-x-2 rounded-md bg-white px-4 py-2 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+        (click)="onOpenHistorySidebar()">
+        <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-gray-700">History</span>
+      </button>
+      <button 
+        class="flex items-center space-x-2 rounded-md bg-white border border-gray-300 px-4 py-2 text-red-600 hover:bg-gray-50 transition-colors"
+        (click)="onSignOut()">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span>Sign out</span>
+      </button>
+    </div>
   </div>
 
   <!-- Kanban Board -->
-  <div class="flex gap-4 flex-1 overflow-x-auto">
-    <!-- Existing Task Columns -->
-    @for (column of taskColumns$ | async; track column.id) {
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full w-72 flex-shrink-0">
-        <!-- Column Header -->
-        <div class="p-4 border-b border-gray-200 flex-shrink-0">
-          <div class="flex items-center justify-between mb-2">
-            <h2 class="font-semibold text-gray-900">{{ column.title }}</h2>
-            <div class="flex items-center space-x-2">
-              <span class="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded-full">{{ column.count }}</span>
-              <button class="text-gray-400 hover:text-gray-600">
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                </svg>
+  <div class="flex gap-4 flex-1 overflow-x-auto justify-center">
+    <!-- Empty Board State -->
+    @if (isBoardEmpty$ | async) {
+      <!-- Empty Board Placeholder -->
+      <div class="w-80 flex-shrink-0">
+        @if (!(isAddingList$ | async)) {
+          <!-- Add First List Button -->
+          <div class="bg-white bg-opacity-60 rounded-lg border-2 border-dashed border-gray-300 p-8 text-center">
+            <div class="flex flex-col items-center space-y-4">
+              <svg class="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Add another list</h3>
+                <button 
+                  class="inline-flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                  (click)="onStartAddingList()">
+                  <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add List
+                </button>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <!-- Add First List Form -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <input
+              type="text"
+              [(ngModel)]="newListTitle"
+              placeholder="Enter list title..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent mb-3"
+              (keydown)="onNewListKeydown($event)"
+              #listTitleInput>
+            
+            <div class="flex space-x-2">
+              <button
+                (click)="onSaveNewList()"
+                [disabled]="!newListTitle.trim()"
+                class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-1 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Add list
+              </button>
+              <button
+                (click)="onCancelAddingList()"
+                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                Cancel
               </button>
             </div>
           </div>
-        </div>
-
-        <!-- Add New Card Button -->
-        <div class="p-4 border-b border-gray-100 flex-shrink-0">
-          <button 
-            class="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 flex items-center justify-center transition-colors"
-            (click)="onAddNewCard(column.id)">
-            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Add new card
-          </button>
-        </div>
-
-        <!-- Task Cards -->
-        <div class="p-4 space-y-3 flex-1 overflow-y-auto">
-          @for (task of column.tasks; track task.id) {
-            <app-task-card 
-              [task]="task"
-              [availableStatuses]="getAvailableStatuses(task.status)"
-              (statusChanged)="onTaskStatusChanged($event)">
-            </app-task-card>
-          }
-          
-          @empty {
-            <div class="text-center py-8 text-gray-500">
-              <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <p class="text-sm">No tasks in this column</p>
-            </div>
-          }
-        </div>
+        }
       </div>
-    }
+    } @else {
+      <!-- List Columns -->
+      @for (column of listColumns$ | async; track trackByListId($index, column)) {
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full w-80 flex-shrink-0">
+          <!-- Column Header -->
+          <div class="p-4 border-b border-gray-200 flex-shrink-0">
+            @if ((editingListId$ | async) === column.id) {
+              <!-- Edit Mode -->
+              <div class="mb-2">
+                <input
+                  type="text"
+                  [value]="column.name"
+                  #editInput
+                  class="w-full px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500 font-semibold text-gray-900"
+                  (keydown.enter)="onSaveEditList(column.id, editInput.value)"
+                  (keydown.escape)="onCancelEditList()"
+                  (blur)="onSaveEditList(column.id, editInput.value)">
+                <div class="flex space-x-2 mt-2">
+                  <button
+                    (click)="onSaveEditList(column.id, editInput.value)"
+                    class="text-xs px-2 py-1 bg-slate-600 text-white rounded hover:bg-slate-700">
+                    Save
+                  </button>
+                  <button
+                    (click)="onCancelEditList()"
+                    class="text-xs px-2 py-1 text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <!-- Display Mode -->
+              <div class="flex items-center justify-between mb-2">
+                <h2 class="font-semibold text-gray-900">{{ column.name }}</h2>
+                <div class="flex items-center space-x-2">
+                  <span class="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded-full">{{ column.taskCount }}</span>
+                  <!-- Context Menu Button -->
+                  <div class="relative">
+                    <button 
+                      class="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                      [id]="'menu-button-' + column.id"
+                      #menuButton
+                      (click)="toggleContextMenu(column.id, $event)">
+                      <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+                    <!-- Context Menu -->
+                    @if (showContextMenu === column.id) {
+                      <div class="absolute right-0 top-8 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10"
+                           >
+                        <button
+                          (click)="onEditList(column.id); hideContextMenu()"
+                          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+                          Edit
+                        </button>
+                        <button
+                          (click)="onDeleteList(column.id); hideContextMenu()"
+                          class="w-full text-left px-4 py-2 text-sm text-red-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-b-lg">
+                          Delete
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
 
-    <!-- Add Another List Section -->
-    <div class="w-72 flex-shrink-0">
-      @if (!isAddingNewList) {
-        <!-- Add List Button -->
-        <button 
-          class="w-full h-16 bg-white bg-opacity-60 hover:bg-opacity-80 rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-400 flex items-center justify-center transition-colors text-gray-600 hover:text-gray-800"
-          (click)="onStartAddingList()">
-          <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          <span class="font-medium">Add another list</span>
-        </button>
-      } @else {
-        <!-- Add List Form -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <input
-            type="text"
-            [(ngModel)]="newListTitle"
-            placeholder="Enter list title..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-3"
-            (keydown)="onNewListKeydown($event)"
-            #listTitleInput>
-          
-          <div class="flex space-x-2">
-            <button
-              (click)="onSaveNewList()"
-              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 transition-colors">
-              Add list
+          <!-- Add New Card Button -->
+          <div class="p-4 border-b border-gray-100 flex-shrink-0">
+            <button 
+              class="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 flex items-center justify-center transition-colors"
+              (click)="onAddNewCard(column.id)">
+              <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Add new card
             </button>
-            <button
-              (click)="onCancelAddingList()"
-              class="px-4 py-2 text-gray-600 hover:text-gray-800 focus:outline-none transition-colors">
-              Cancel
-            </button>
+          </div>
+
+          <!-- Task Cards -->
+          <div class="p-4 space-y-3 flex-1 overflow-y-auto transition-colors border-2 border-transparent"
+               (dragover)="onDragOver($event)"
+               (dragenter)="onDragEnter($event, column.id)"
+               (dragleave)="onDragLeave($event, column.id)"
+               (drop)="onDrop($event, column.id)"
+               [class.bg-blue-50]="isDragOverList === column.id"
+               [class.border-blue-300]="isDragOverList === column.id"
+               [class.border-dashed]="isDragOverList === column.id">
+            @for (task of column.tasks; track trackByTaskId($index, task)) {
+              <app-task-card 
+                [task]="task"
+                [availableStatuses]="getAvailableStatuses(task.status)"
+                [availableLists]="(sortedLists$ | async) || []"
+                (statusChanged)="onTaskStatusChanged($event)"
+                (listChanged)="onTaskListChanged($event)"
+                (cardClicked)="onCardClicked($event)"
+                (dragStart)="onTaskDragStart($event)"
+                (dragEnd)="onTaskDragEnd($event)">
+              </app-task-card>
+            }
+            
+            @empty {
+              <div class="text-center py-8 text-gray-500">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <p class="text-sm">No tasks in this list</p>
+              </div>
+            }
           </div>
         </div>
       }
-    </div>
+
+      <!-- Add Another List Section (Always present at the end) -->
+      <div class="w-80 flex-shrink-0">
+        @if (!(isAddingList$ | async)) {
+          <!-- Add List Button -->
+          <button 
+            class="w-full h-16 bg-white bg-opacity-60 hover:bg-opacity-80 rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-400 flex items-center justify-center transition-colors text-gray-600 hover:text-gray-800"
+            (click)="onStartAddingList()">
+            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span class="font-medium">Add another list</span>
+          </button>
+        } @else {
+          <!-- Add List Form -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <input
+              type="text"
+              [(ngModel)]="newListTitle"
+              placeholder="Enter list title..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent mb-3"
+              (keydown)="onNewListKeydown($event)"
+              #listTitleInput>
+            
+            <div class="flex space-x-2">
+              <button
+                (click)="onSaveNewList()"
+                [disabled]="!newListTitle.trim()"
+                class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-1 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Add list
+              </button>
+              <button
+                (click)="onCancelAddingList()"
+                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
   </div>
+
+  <!-- Card Creation Modal -->
+  @if (isCreateCardModalOpen$ | async) {
+    <app-card-creation-modal></app-card-creation-modal>
+  }
+
+  <!-- Card Edit Modal -->
+  @if (isEditCardModalOpen$ | async) {
+    <app-card-edit-modal></app-card-edit-modal>
+  }
+
+  <!-- History Sidebar -->
+  @if (isHistorySidebarOpen) {
+    <app-history-sidebar (closeSidebar)="onCloseHistorySidebar()"></app-history-sidebar>
+  }
 </div>

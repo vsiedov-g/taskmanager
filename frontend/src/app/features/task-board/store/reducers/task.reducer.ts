@@ -29,6 +29,11 @@ export const initialTaskState: TaskState = taskAdapter.getInitialState({
     dueDateTo: null,
     showCompleted: true
   },
+  // Modal state
+  isCreateCardModalOpen: false,
+  createCardModalListId: null,
+  isEditCardModalOpen: false,
+  editingTaskId: null,
   viewMode: 'kanban' as const,
   groupBy: 'status' as const,
   searchTerm: '',
@@ -132,6 +137,25 @@ export const taskReducer = createReducer(
     error
   })),
   
+  // Move task
+  on(TaskActions.moveTask, (state) => ({
+    ...state,
+    saving: true,
+    error: null
+  })),
+  
+  on(TaskActions.moveTaskSuccess, (state) => ({
+    ...state,
+    saving: false,
+    error: null
+  })),
+  
+  on(TaskActions.moveTaskFailure, (state, { error }) => ({
+    ...state,
+    saving: false,
+    error
+  })),
+  
   // Delete task
   on(TaskActions.deleteTask, (state, { id }) => ({
     ...state,
@@ -150,6 +174,32 @@ export const taskReducer = createReducer(
   on(TaskActions.deleteTaskFailure, (state, { error }) => ({
     ...state,
     deleting: null,
+    error
+  })),
+  
+  // Delete tasks by list
+  on(TaskActions.deleteTasksByList, (state) => ({
+    ...state,
+    loading: true,
+    error: null
+  })),
+  
+  on(TaskActions.deleteTasksByListSuccess, (state, { listId }) => {
+    // Remove all tasks with the specified listId
+    const tasksToDelete = Object.values(state.entities)
+      .filter(task => task?.listId === listId)
+      .map(task => task!.id);
+    
+    return taskAdapter.removeMany(tasksToDelete, {
+      ...state,
+      loading: false,
+      error: null
+    });
+  }),
+  
+  on(TaskActions.deleteTasksByListFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
     error
   })),
   
@@ -241,7 +291,33 @@ export const taskReducer = createReducer(
       ...state,
       selectedTaskId: null
     })
-  )
+  ),
+
+  // Card creation modal
+  on(TaskActions.openCreateCardModal, (state, { listId }) => ({
+    ...state,
+    isCreateCardModalOpen: true,
+    createCardModalListId: listId || null
+  })),
+
+  on(TaskActions.closeCreateCardModal, (state) => ({
+    ...state,
+    isCreateCardModalOpen: false,
+    createCardModalListId: null
+  })),
+
+  // Card edit modal
+  on(TaskActions.openEditCardModal, (state, { task }) => ({
+    ...state,
+    isEditCardModalOpen: true,
+    editingTaskId: task.id
+  })),
+
+  on(TaskActions.closeEditCardModal, (state) => ({
+    ...state,
+    isEditCardModalOpen: false,
+    editingTaskId: null
+  }))
 );
 
 // Export entity selectors

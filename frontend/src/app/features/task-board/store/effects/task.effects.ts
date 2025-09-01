@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { map, exhaustMap, catchError, mergeMap, tap } from 'rxjs/operators';
 import { TaskService } from '../../services/task.service';
 import { TaskActions } from '../actions/task.actions';
+import { ActivityLogActions } from '../actions/activity-log.actions';
 import { AppActions } from '../../../../core/store/actions/app.actions';
 
 @Injectable()
@@ -28,18 +29,28 @@ export class TaskEffects {
   createTask$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TaskActions.createTask),
-      exhaustMap(({ task }) =>
-        // TODO: Replace with actual API call
-        of({
-          ...task,
-          id: Date.now().toString(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        }).pipe(
-          map((createdTask) => TaskActions.createTaskSuccess({ task: createdTask })),
+      exhaustMap(({ task }) => {
+        const createRequest = {
+          title: task.title,
+          description: task.description,
+          status: task.status,
+          priority: task.priority,
+          dueDate: task.dueDate,
+          position: task.position,
+          assigneeId: task.assigneeId,
+          listId: task.listId,
+          projectId: task.projectId
+        };
+        
+        return this.taskService.createTask(createRequest).pipe(
+          mergeMap((createdTask) => [
+            TaskActions.createTaskSuccess({ task: createdTask }),
+            TaskActions.closeCreateCardModal(),
+            ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+          ]),
           catchError((error) => of(TaskActions.createTaskFailure({ error: error.message })))
-        )
-      )
+        );
+      })
     )
   );
 
@@ -48,15 +59,32 @@ export class TaskEffects {
     this.actions$.pipe(
       ofType(TaskActions.updateTask),
       exhaustMap(({ id, changes }) =>
-        // TODO: Replace with actual API call
         this.taskService.getTasks().pipe(
-          map((tasks) => {
-            const task = tasks.find(t => t.id === id);
-            if (task) {
-              const updatedTask = { ...task, ...changes, updatedAt: new Date().toISOString() };
-              return TaskActions.updateTaskSuccess({ task: updatedTask });
+          mergeMap((tasks) => {
+            const currentTask = tasks.find(t => t.id === id);
+            if (!currentTask) {
+              throw new Error('Task not found');
             }
-            throw new Error('Task not found');
+            
+            const updateRequest = {
+              title: changes.title || currentTask.title,
+              description: changes.description !== undefined ? changes.description : currentTask.description,
+              status: changes.status || currentTask.status,
+              priority: changes.priority || currentTask.priority,
+              dueDate: changes.dueDate !== undefined ? changes.dueDate : currentTask.dueDate,
+              position: changes.position !== undefined ? changes.position : currentTask.position,
+              assigneeId: changes.assigneeId !== undefined ? changes.assigneeId : currentTask.assigneeId,
+              listId: changes.listId || currentTask.listId,
+              projectId: changes.projectId !== undefined ? changes.projectId : currentTask.projectId
+            };
+            
+            return this.taskService.updateTask(id, updateRequest).pipe(
+              mergeMap((updatedTask) => [
+                TaskActions.updateTaskSuccess({ task: updatedTask }),
+                TaskActions.closeEditCardModal(),
+                ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+              ])
+            );
           }),
           catchError((error) => of(TaskActions.updateTaskFailure({ error: error.message })))
         )
@@ -70,8 +98,28 @@ export class TaskEffects {
       ofType(TaskActions.updateTaskStatus),
       exhaustMap(({ id, status, position }) =>
         this.taskService.updateTaskStatus(id, status).pipe(
-          map((task) => TaskActions.updateTaskStatusSuccess({ task })),
+          mergeMap((task) => [
+            TaskActions.updateTaskStatusSuccess({ task }),
+            ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+          ]),
           catchError((error) => of(TaskActions.updateTaskStatusFailure({ error: error.message })))
+        )
+      )
+    )
+  );
+
+  // Move task effect (between lists)
+  moveTask$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TaskActions.moveTask),
+      exhaustMap(({ id, listId, position }) =>
+        this.taskService.moveTask(id, { listId, position }).pipe(
+          mergeMap(() => [
+            TaskActions.moveTaskSuccess({ id }),
+            TaskActions.loadTasks(), // Reload tasks to get updated state
+            ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+          ]),
+          catchError((error) => of(TaskActions.moveTaskFailure({ error: error.message })))
         )
       )
     )
@@ -82,12 +130,23 @@ export class TaskEffects {
     this.actions$.pipe(
       ofType(TaskActions.deleteTask),
       exhaustMap(({ id }) =>
-        // TODO: Replace with actual API call
-        of({ id }).pipe(
-          map(() => TaskActions.deleteTaskSuccess({ id })),
+        this.taskService.deleteTask(id).pipe(
+          mergeMap(() => [
+            TaskActions.deleteTaskSuccess({ id }),
+            TaskActions.closeEditCardModal(),
+            ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+          ]),
           catchError((error) => of(TaskActions.deleteTaskFailure({ error: error.message })))
         )
       )
+    )
+  );
+
+  // Delete tasks by list effect (handled by backend when list is deleted)
+  deleteTasksByList$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TaskActions.deleteTasksByList),
+      map(({ listId }) => TaskActions.deleteTasksByListSuccess({ listId }))
     )
   );
 
@@ -96,13 +155,27 @@ export class TaskEffects {
     this.actions$.pipe(
       ofType(TaskActions.bulkUpdateTasks),
       exhaustMap(({ ids, changes }) =>
-        // TODO: Replace with actual API call
+        // For now, update tasks individually - can optimize with bulk endpoint later
         this.taskService.getTasks().pipe(
-          map((tasks) => {
-            const updatedTasks = tasks
-              .filter(task => ids.includes(task.id))
-              .map(task => ({ ...task, ...changes, updatedAt: new Date().toISOString() }));
-            return TaskActions.bulkUpdateTasksSuccess({ tasks: updatedTasks });
+          mergeMap((tasks) => {
+            const tasksToUpdate = tasks.filter(task => ids.includes(task.id));
+            const updatePromises = tasksToUpdate.map(task => {
+              const updateRequest = {
+                title: changes.title || task.title,
+                description: changes.description !== undefined ? changes.description : task.description,
+                status: changes.status || task.status,
+                priority: changes.priority || task.priority,
+                dueDate: changes.dueDate !== undefined ? changes.dueDate : task.dueDate,
+                position: changes.position !== undefined ? changes.position : task.position,
+                assigneeId: changes.assigneeId !== undefined ? changes.assigneeId : task.assigneeId,
+                listId: changes.listId || task.listId,
+                projectId: changes.projectId !== undefined ? changes.projectId : task.projectId
+              };
+              return this.taskService.updateTask(task.id, updateRequest);
+            });
+            
+            // For simplicity, just reload all tasks after bulk update
+            return of(TaskActions.loadTasks());
           }),
           catchError((error) => of(TaskActions.bulkUpdateTasksFailure({ error: error.message })))
         )
@@ -115,9 +188,9 @@ export class TaskEffects {
     this.actions$.pipe(
       ofType(TaskActions.bulkDeleteTasks),
       exhaustMap(({ ids }) =>
-        // TODO: Replace with actual API call
-        of({ ids }).pipe(
-          map(() => TaskActions.bulkDeleteTasksSuccess({ ids })),
+        // Delete tasks individually - can optimize with bulk endpoint later
+        of(...ids.map(id => this.taskService.deleteTask(id))).pipe(
+          mergeMap(() => of(TaskActions.bulkDeleteTasksSuccess({ ids }))),
           catchError((error) => of(TaskActions.bulkDeleteTasksFailure({ error: error.message })))
         )
       )
@@ -161,6 +234,18 @@ export class TaskEffects {
     )
   );
 
+  moveTaskSuccess$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TaskActions.moveTaskSuccess),
+      map(() => AppActions.addNotification({
+        notification: {
+          type: 'success',
+          message: 'Task moved successfully'
+        }
+      }))
+    )
+  );
+
   // Error notification effects
   taskFailure$ = createEffect(() =>
     this.actions$.pipe(
@@ -169,6 +254,7 @@ export class TaskEffects {
         TaskActions.createTaskFailure,
         TaskActions.updateTaskFailure,
         TaskActions.updateTaskStatusFailure,
+        TaskActions.moveTaskFailure,
         TaskActions.deleteTaskFailure,
         TaskActions.bulkUpdateTasksFailure,
         TaskActions.bulkDeleteTasksFailure

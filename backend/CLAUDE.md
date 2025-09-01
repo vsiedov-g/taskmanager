@@ -1,7 +1,7 @@
-# Task Manager Backend - Development Guide
+# Task Manager Backend - Clean Architecture Implementation Guide
 
 ## Project Overview
-This is the backend API for the Task Manager application with Slack integration, built using Clean Architecture principles and modern .NET technologies.
+This is the backend API for the Task Manager application with Slack integration, built using Clean Architecture principles and modern .NET technologies. This implementation follows enterprise-level patterns for managing domain entities, business logic, external integrations, and API endpoints in a scalable, maintainable architecture.
 
 ## Tech Stack
 
@@ -11,9 +11,12 @@ This is the backend API for the Task Manager application with Slack integration,
 - **C# 12** - Programming language with nullable reference types enabled
 
 ### Database & ORM
-- **PostgreSQL** - Primary database
+- **PostgreSQL** - Primary database for production
+- **SQLite** - Development and testing database
 - **Entity Framework Core 9.0.8** - ORM and database migrations
-- **Npgsql.EntityFrameworkCore.PostgreSQL 9.0.4** - PostgreSQL provider
+- **Microsoft.EntityFrameworkCore.Sqlite** - SQLite provider for development
+- **Npgsql.EntityFrameworkCore.PostgreSQL** - PostgreSQL provider for production
+- **In-Memory Database** - Available for testing scenarios
 
 ### Architecture & Patterns
 - **Clean Architecture** - Separation of concerns with dependency inversion
@@ -33,10 +36,17 @@ This is the backend API for the Task Manager application with Slack integration,
 - **Microsoft.IdentityModel.Tokens 8.14.0**
 - **System.IdentityModel.Tokens.Jwt 8.14.0**
 
+### Communication & Messaging
+- **gRPC** - High-performance inter-service communication
+- **RabbitMQ + MassTransit** - Asynchronous messaging (planned)
+- **HTTP Clients** - External API integrations
+
 ### External Integrations
 - **SlackAPI 1.1.14** - Slack workspace integration
 - **OAuth 2.0** - Slack authentication flow
 - **Webhooks** - Real-time event handling
+- **Payment Providers** - Payment processing and subscription management (planned)
+- **Identity Provider Integration** - External authentication services (planned)
 
 ### Logging & Monitoring
 - **Serilog 4.3.0** - Structured logging
@@ -110,10 +120,56 @@ This is the backend API for the Task Manager application with Slack integration,
 
 #### 4. API Layer (`TaskManager.API`)
 **Purpose**: HTTP API endpoints and web concerns
-- **Controllers**: TasksController, ProjectsController, SlackController
-- **Middleware**: Authentication, logging, error handling
-- **Filters**: Custom action filters
+- **Controllers**: TasksController, ProjectsController, SlackController, AuthController
+- **gRPC Services**: Inter-service communication (planned)
+- **Middleware**: Authentication metadata middleware, error handling
+- **Filters**: API exception handling, cross-cutting concerns
 - **Configuration**: Dependency injection, services registration
+
+## Key Architectural Features
+
+### 1. **Authentication & Authorization**
+- JWT token-based authentication with custom user management
+- Role-based access control (RBAC) - Admin, Manager, Member
+- User registration and profile management
+- Multi-tenant support (planned)
+- Slack OAuth integration (planned)
+
+### 2. **Task Management System**
+- Complete CRUD operations for tasks, lists, and users
+- Task lifecycle management with status transitions
+- Priority-based task organization and filtering
+- Due date tracking and alerts
+- Assignment and ownership tracking
+- Bulk operations for efficiency
+
+### 3. **External Service Integration**
+- Slack workspace integration with OAuth 2.0
+- Real-time notifications in Slack channels
+- Slash commands and interactive components
+- Webhook handling for external events
+- Multiple service provider support (planned)
+
+### 4. **Real-time Features**
+- SignalR hubs for live updates (planned)
+- Task status change notifications
+- Assignment notifications
+- Project progress updates
+- Cross-client synchronization
+
+### 5. **Data Management**
+- Multi-database support (SQLite for dev, PostgreSQL for prod)
+- Entity Framework Core with migrations
+- Repository pattern with Unit of Work
+- Audit trail and change tracking
+- Data validation and business rules
+
+### 6. **Security & Performance**
+- JWT token validation and expiration
+- Input validation and sanitization
+- SQL injection prevention through EF Core
+- CORS configuration for frontend integration
+- Connection pooling and query optimization
 
 ## Project Structure
 
@@ -186,6 +242,75 @@ backend/
     ├── TaskManager.Infrastructure.Tests/
     └── TaskManager.API.Tests/
 ```
+
+## Database Schema Patterns
+
+### Core Entity Types
+- **User Entities**: Central entities for authentication and user management
+  - User profiles with authentication credentials
+  - User preferences and settings
+  - Multi-tenant user relationships (planned)
+- **Task Management Entities**: Core business domain objects
+  - Tasks with full lifecycle management
+  - Lists for task organization
+  - Priority and status tracking
+- **Audit Entities**: Change tracking and history (planned)
+  - Task change logs
+  - User activity tracking
+  - System audit trails
+- **Integration Entities**: External service connections (planned)
+  - Slack workspace configurations
+  - External service credentials
+  - Webhook configurations
+
+### Common Relationships
+- **One-to-Many**: User → Tasks, List → Tasks, User → Lists
+- **One-to-One**: User → Profile (planned), List → Configuration (planned)
+- **Many-to-Many**: Users ↔ Roles (planned), Tasks ↔ Categories (planned)
+- **Self-referencing**: Task → SubTasks (planned), User → Manager (planned)
+
+## API Endpoint Patterns
+
+### Authentication Endpoints (`/api/auth`)
+- `POST /api/auth/signup` - User registration
+- `POST /api/auth/signin` - User authentication
+- `POST /api/auth/refresh` - Token refresh (planned)
+- `POST /api/auth/logout` - User logout (planned)
+
+### User Management (`/api/users`)
+- `GET /api/users/profile` - Current user profile (planned)
+- `PUT /api/users/profile` - Update user profile (planned)
+- `GET /api/users/{id}` - Get user by ID (planned)
+- `PUT /api/users/{id}` - Update user (planned)
+
+### Task Management (`/api/tasks`)
+- `GET /api/tasks` - Get all tasks (planned)
+- `POST /api/tasks` - Create new task (planned)
+- `GET /api/tasks/{id}` - Get task by ID (planned)
+- `PUT /api/tasks/{id}` - Update task (planned)
+- `DELETE /api/tasks/{id}` - Delete task (planned)
+
+### List Management (`/api/lists`)
+- `GET /api/lists` - Get all lists (planned)
+- `POST /api/lists` - Create new list (planned)
+- `GET /api/lists/{id}` - Get list by ID (planned)
+- `PUT /api/lists/{id}` - Update list (planned)
+- `DELETE /api/lists/{id}` - Delete list (planned)
+
+### Slack Integration (`/api/slack`)
+- `POST /api/slack/oauth` - Slack OAuth flow (planned)
+- `POST /api/slack/webhook` - Slack webhook handler (planned)
+- `GET /api/slack/workspaces` - Get connected workspaces (planned)
+- `DELETE /api/slack/workspaces/{id}` - Disconnect workspace (planned)
+
+## gRPC Service Patterns (Planned)
+
+### Data Access Services
+- Task data retrieval and manipulation
+- User information access
+- Real-time event broadcasting
+- Cross-service communication
+- Performance-critical operations
 
 ## Key Features & Requirements
 
@@ -437,6 +562,55 @@ app.Run();
 - **Testability**: Individual layer configurations can be tested in isolation
 - **Consistency**: Standardized pattern across all layers
 
+## Development Patterns
+
+### CQRS (Command Query Responsibility Segregation)
+- Separate command and query operations using MediatR
+- Dedicated handlers for each operation type
+- Clear separation between read and write operations
+- Simplified testing and maintenance
+
+### Repository Pattern
+- Generic repository implementation with base functionality
+- Unit of Work pattern for transaction management
+- Consistent data access abstraction across entities
+- Interface-based dependencies for testability
+
+### Dependency Injection
+- Service registration in dedicated ConfigureServices classes
+- Interface-based dependencies throughout all layers
+- Scoped lifetime management for database contexts
+- Singleton services for stateless operations
+
+### Domain-Driven Design
+- Rich domain entities with business logic
+- Value objects for complex data types
+- Domain events for business process notifications
+- Aggregate roots for consistency boundaries
+
+## Error Handling
+
+### Custom Exceptions
+- `UnauthorizedAccessException` - Authentication/authorization failures
+- `InvalidOperationException` - Business rule violations
+- `ArgumentException` - Input validation failures
+- `EntityNotFoundException` - Resource not found (planned)
+- `ConflictException` - Resource conflicts (planned)
+- `ValidationException` - FluentValidation failures (planned)
+
+### Global Exception Handling
+- Centralized error handling in API middleware
+- Consistent API error response format
+- Proper HTTP status code mapping
+- Structured logging integration
+- Security-aware error messages
+
+### Validation Strategy
+- FluentValidation for input validation (planned)
+- Domain entity validation in business logic
+- Custom validation attributes for specific rules
+- Client-side and server-side validation coordination
+
 ## Testing Strategy
 
 ### Unit Tests
@@ -479,4 +653,79 @@ app.Run();
 - Database query logging
 - External service call logging
 
-This backend provides a solid foundation for the Task Manager application with comprehensive Slack integration, following industry best practices and clean architecture principles.
+## Configuration Management
+
+### Connection Strings
+- **SQLite**: Development and testing database
+- **PostgreSQL**: Production database connection
+- **RabbitMQ**: Message broker connection (planned)
+
+### External Services
+- **JWT Configuration**: Token signing keys and validation parameters
+- **Slack Integration**: OAuth credentials and API keys (planned)
+- **CORS**: Frontend application URL configurations
+
+### Environment Variables
+```
+DATABASE_URL=Data Source=taskmanager.db (SQLite for development)
+JWT_KEY=your-super-secret-jwt-key-min-32-characters-long
+JWT_ISSUER=TaskManagerAPI
+JWT_AUDIENCE=TaskManagerClient
+CORS_ORIGINS=http://localhost:4200,http://localhost:4201
+```
+
+## Hosting Configuration
+
+### Development Server
+- **Kestrel**: HTTP server on port 5109 (configurable)
+- **Swagger**: API documentation available at /swagger
+- **Database**: SQLite file created automatically
+- **CORS**: Configured for local frontend development
+
+### Health Checks (Planned)
+- Database connectivity monitoring
+- External service health verification
+- Application status endpoints
+- Monitoring integrations
+
+## Deployment Configuration
+
+### Docker Support (Planned)
+- Multi-stage build process for optimization
+- Production-ready container configuration
+- Environment-specific configuration management
+- Container orchestration support
+
+### Environment-Specific Settings
+- Development: SQLite, detailed logging, Swagger enabled
+- Staging: PostgreSQL, structured logging, limited debugging
+- Production: PostgreSQL, minimal logging, security hardening
+
+## Messaging Architecture (Planned)
+
+### Message Consumers
+- **Task Event Consumers**: Process task lifecycle events
+- **Notification Consumers**: Handle real-time notifications
+- **Integration Consumers**: Process external service events
+
+### Event-Driven Features
+- Task status change notifications
+- User activity tracking
+- Cross-service communication
+- Background job processing
+
+## Security Implementation
+
+### Authentication Flow
+- JWT token generation and validation
+- User context extraction from tokens
+- Role-based authorization (planned)
+- Secure credential management
+
+### Data Protection
+- Password hashing with PBKDF2 and salt
+- Secure configuration management
+- Input validation and sanitization
+- SQL injection prevention through EF Core
+
+This comprehensive backend architecture provides a scalable, maintainable foundation for enterprise-level task management applications. The implementation demonstrates modern .NET development practices with Clean Architecture principles, comprehensive security measures, and extensible patterns for future growth. The modular design supports both current requirements and planned enhancements including Slack integration, real-time features, and advanced analytics.

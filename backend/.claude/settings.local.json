@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build)",
+      "Bash(taskkill:*)",
+      "Read(D:\\projects\\taskmanager\\frontend/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src\\app\\features\\task-board\\components\\task-card/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src\\app\\features\\task-board\\models/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src\\app\\features\\task-board\\models/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src\\app\\features\\task-board\\components\\history-sidebar/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src\\app\\features\\task-board\\components\\history-sidebar/**)",
+      "Read(D:\\projects\\taskmanager\\frontend/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src\\app\\core\\services/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src\\app\\features\\task-board\\pages\\task-board/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src\\app\\features\\task-board\\components\\card-creation-modal/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src\\app\\features\\task-board\\components\\card-edit-modal/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src\\app\\features\\auth\\components\\sign-in/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src\\app\\features\\auth\\components\\sign-up/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src/**)",
+      "Read(D:\\projects\\taskmanager\\frontend\\src/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -21,7 +21,19 @@
       "Bash(docker:*)",
       "Bash(git push:*)",
       "Bash(npm start)",
-      "Bash(ng serve:*)"
+      "Bash(ng serve:*)",
+      "Bash(dotnet run)",
+      "Bash(dotnet build)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet ef migrations remove:*)",
+      "Bash(dotnet ef dbcontext info:*)",
+      "Bash(dotnet remove:*)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet ef migrations add:*)",
+      "Bash(taskkill:*)",
+      "Bash(dotnet ef database update:*)",
+      "Bash(dotnet ef migrations:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []

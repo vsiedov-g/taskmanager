@@ -25,10 +25,20 @@ export const TaskActions = createActionGroup({
     'Update Task Status Success': props<{ task: Task }>(),
     'Update Task Status Failure': props<{ error: string }>(),
     
+    // Move task (between lists)
+    'Move Task': props<{ id: string; listId: string; position: number }>(),
+    'Move Task Success': props<{ id: string }>(),
+    'Move Task Failure': props<{ error: string }>(),
+    
     // Delete task
     'Delete Task': props<{ id: string }>(),
     'Delete Task Success': props<{ id: string }>(),
     'Delete Task Failure': props<{ error: string }>(),
+    
+    // Delete tasks by list (when list is deleted)
+    'Delete Tasks By List': props<{ listId: string }>(),
+    'Delete Tasks By List Success': props<{ listId: string }>(),
+    'Delete Tasks By List Failure': props<{ error: string }>(),
     
     // Bulk operations
     'Bulk Update Tasks': props<{ ids: string[]; changes: Partial<Task> }>(),
@@ -61,5 +71,13 @@ export const TaskActions = createActionGroup({
     // Cache management
     'Refresh Tasks': emptyProps(),
     'Clear Task Cache': emptyProps(),
+
+    // Card creation modal
+    'Open Create Card Modal': props<{ listId?: string }>(),
+    'Close Create Card Modal': emptyProps(),
+
+    // Card edit modal
+    'Open Edit Card Modal': props<{ task: Task }>(),
+    'Close Edit Card Modal': emptyProps(),
   }
 });

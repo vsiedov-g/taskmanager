@@ -15,6 +15,12 @@ export interface TaskState extends EntityState<Task> {
   selectedTaskId: string | null;
   filters: TaskFilters;
   
+  // Modal state
+  isCreateCardModalOpen: boolean;
+  createCardModalListId: string | null;
+  isEditCardModalOpen: boolean;
+  editingTaskId: string | null;
+  
   // View state
   viewMode: 'kanban' | 'list' | 'calendar';
   groupBy: 'status' | 'priority' | 'assignee';

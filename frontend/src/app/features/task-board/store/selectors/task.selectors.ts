@@ -47,7 +47,7 @@ export const selectSelectedTaskId = createSelector(
 export const selectSelectedTask = createSelector(
   selectTaskEntitiesFromState,
   selectSelectedTaskId,
-  (entities, selectedId) => selectedId ? entities[selectedId] : null
+  (entities, selectedId) => selectedId ? entities[selectedId] || null : null
 );
 
 // Filter selectors
@@ -116,20 +116,20 @@ export const selectFilteredTasks = createSelector(
     // Apply date range filter
     if (filters.dueDateFrom) {
       filteredTasks = filteredTasks.filter(task => 
-        task.dueDate >= filters.dueDateFrom!
+        task.dueDate && task.dueDate >= filters.dueDateFrom!
       );
     }
 
     if (filters.dueDateTo) {
       filteredTasks = filteredTasks.filter(task => 
-        task.dueDate <= filters.dueDateTo!
+        task.dueDate && task.dueDate <= filters.dueDateTo!
       );
     }
 
     // Apply completed filter
     if (!filters.showCompleted) {
       filteredTasks = filteredTasks.filter(task => 
-        task.status !== TaskStatus.CLOSED
+        task.status !== TaskStatus.Done
       );
     }
 
@@ -138,7 +138,7 @@ export const selectFilteredTasks = createSelector(
       const term = searchTerm.toLowerCase().trim();
       filteredTasks = filteredTasks.filter(task => 
         task.title.toLowerCase().includes(term) ||
-        task.description.toLowerCase().includes(term)
+        (task.description && task.description.toLowerCase().includes(term))
       );
     }
 
@@ -163,11 +163,11 @@ export const selectSortedTasks = createSelector(
         bValue = new Date(bValue).getTime();
       }
 
-      // Handle priority field (convert to numeric for sorting)
+      // Handle priority field (already numeric in the new enum)
       if (sortBy.field === 'priority') {
-        const priorityOrder = { 'Low': 1, 'Medium': 2, 'High': 3, 'Critical': 4 };
-        aValue = priorityOrder[aValue as TaskPriority] || 0;
-        bValue = priorityOrder[bValue as TaskPriority] || 0;
+        // Priority values are now numeric (0=LOW, 1=MEDIUM, 2=HIGH, 3=CRITICAL)
+        aValue = aValue as number;
+        bValue = bValue as number;
       }
 
       // Handle string fields
@@ -190,10 +190,9 @@ export const selectTasksByStatus = createSelector(
   selectSortedTasks,
   (tasks) => {
     const tasksByStatus = {
-      [TaskStatus.TODO]: tasks.filter(task => task.status === TaskStatus.TODO),
-      [TaskStatus.PLANNED]: tasks.filter(task => task.status === TaskStatus.PLANNED),
-      [TaskStatus.IN_PROGRESS]: tasks.filter(task => task.status === TaskStatus.IN_PROGRESS),
-      [TaskStatus.CLOSED]: tasks.filter(task => task.status === TaskStatus.CLOSED)
+      [TaskStatus.Todo]: tasks.filter(task => task.status === TaskStatus.Todo),
+      [TaskStatus.InProgress]: tasks.filter(task => task.status === TaskStatus.InProgress),
+      [TaskStatus.Done]: tasks.filter(task => task.status === TaskStatus.Done)
     };
 
     return tasksByStatus;
@@ -206,28 +205,22 @@ export const selectTaskColumns = createSelector(
   (tasksByStatus) => {
     return [
       {
-        id: TaskStatus.TODO,
+        id: TaskStatus.Todo,
         title: 'To Do',
-        tasks: tasksByStatus[TaskStatus.TODO],
-        count: tasksByStatus[TaskStatus.TODO].length
+        tasks: tasksByStatus[TaskStatus.Todo],
+        count: tasksByStatus[TaskStatus.Todo].length
       },
       {
-        id: TaskStatus.PLANNED,
-        title: 'Planned',
-        tasks: tasksByStatus[TaskStatus.PLANNED],
-        count: tasksByStatus[TaskStatus.PLANNED].length
-      },
-      {
-        id: TaskStatus.IN_PROGRESS,
+        id: TaskStatus.InProgress,
         title: 'In Progress',
-        tasks: tasksByStatus[TaskStatus.IN_PROGRESS],
-        count: tasksByStatus[TaskStatus.IN_PROGRESS].length
+        tasks: tasksByStatus[TaskStatus.InProgress],
+        count: tasksByStatus[TaskStatus.InProgress].length
       },
       {
-        id: TaskStatus.CLOSED,
-        title: 'Closed',
-        tasks: tasksByStatus[TaskStatus.CLOSED],
-        count: tasksByStatus[TaskStatus.CLOSED].length
+        id: TaskStatus.Done,
+        title: 'Done',
+        tasks: tasksByStatus[TaskStatus.Done],
+        count: tasksByStatus[TaskStatus.Done].length
       }
     ];
   }
@@ -238,10 +231,10 @@ export const selectTasksByPriority = createSelector(
   selectSortedTasks,
   (tasks) => {
     return {
-      [TaskPriority.LOW]: tasks.filter(task => task.priority === TaskPriority.LOW),
-      [TaskPriority.MEDIUM]: tasks.filter(task => task.priority === TaskPriority.MEDIUM),
-      [TaskPriority.HIGH]: tasks.filter(task => task.priority === TaskPriority.HIGH),
-      [TaskPriority.CRITICAL]: tasks.filter(task => task.priority === TaskPriority.CRITICAL)
+      [TaskPriority.Low]: tasks.filter(task => task.priority === TaskPriority.Low),
+      [TaskPriority.Medium]: tasks.filter(task => task.priority === TaskPriority.Medium),
+      [TaskPriority.High]: tasks.filter(task => task.priority === TaskPriority.High),
+      [TaskPriority.Critical]: tasks.filter(task => task.priority === TaskPriority.Critical)
     };
   }
 );
@@ -251,17 +244,15 @@ export const selectTaskStats = createSelector(
   selectAllTasksFromState,
   (tasks) => {
     const total = tasks.length;
-    const completed = tasks.filter(task => task.status === TaskStatus.CLOSED).length;
-    const inProgress = tasks.filter(task => task.status === TaskStatus.IN_PROGRESS).length;
-    const todo = tasks.filter(task => task.status === TaskStatus.TODO).length;
-    const planned = tasks.filter(task => task.status === TaskStatus.PLANNED).length;
+    const completed = tasks.filter(task => task.status === TaskStatus.Done).length;
+    const inProgress = tasks.filter(task => task.status === TaskStatus.InProgress).length;
+    const todo = tasks.filter(task => task.status === TaskStatus.Todo).length;
 
     return {
       total,
       completed,
       inProgress,
       todo,
-      planned,
       completionRate: total > 0 ? Math.round((completed / total) * 100) : 0
     };
   }
@@ -273,8 +264,8 @@ export const selectOverdueTasks = createSelector(
   (tasks) => {
     const now = new Date().toISOString();
     return tasks.filter(task => 
-      task.status !== TaskStatus.CLOSED && 
-      task.dueDate < now
+      task.status !== TaskStatus.Done && 
+      task.dueDate && task.dueDate < now
     );
   }
 );
@@ -285,8 +276,8 @@ export const selectTasksDueToday = createSelector(
   (tasks) => {
     const today = new Date().toISOString().split('T')[0];
     return tasks.filter(task => 
-      task.status !== TaskStatus.CLOSED && 
-      task.dueDate.startsWith(today)
+      task.status !== TaskStatus.Done && 
+      task.dueDate && task.dueDate.startsWith(today)
     );
   }
 );
@@ -301,4 +292,42 @@ export const selectRecentTasks = createSelector(
 
     return tasks.filter(task => task.createdAt > sevenDaysAgoISO);
   }
+);
+
+// Modal selectors
+export const selectIsCreateCardModalOpen = createSelector(
+  selectTaskState,
+  (state) => state.isCreateCardModalOpen
+);
+
+export const selectCreateCardModalListId = createSelector(
+  selectTaskState,
+  (state) => state.createCardModalListId
+);
+
+export const selectIsCreatingTask = createSelector(
+  selectTaskState,
+  (state) => state.saving
+);
+
+// Edit modal selectors
+export const selectIsEditCardModalOpen = createSelector(
+  selectTaskState,
+  (state) => state.isEditCardModalOpen
+);
+
+export const selectEditingTaskId = createSelector(
+  selectTaskState,
+  (state) => state.editingTaskId
+);
+
+export const selectEditingTask = createSelector(
+  selectTaskEntitiesFromState,
+  selectEditingTaskId,
+  (entities, editingId) => editingId ? entities[editingId] || null : null
+);
+
+export const selectIsUpdatingTask = createSelector(
+  selectTaskState,
+  (state) => state.saving
 );

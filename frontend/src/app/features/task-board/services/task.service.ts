@@ -1,169 +1,116 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { Task, TaskStatus, TaskPriority, TaskColumn } from '../models/task.model';
+import { environment } from '../../../../environments/environment';
+
+export interface CreateTaskRequest {
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate?: string;
+  position: number;
+  assigneeId?: string;
+  listId: string;
+  projectId?: string;
+}
+
+export interface UpdateTaskRequest {
+  title: string;
+  description?: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate?: string;
+  position: number;
+  assigneeId?: string;
+  listId: string;
+  projectId?: string;
+}
+
+export interface MoveTaskRequest {
+  listId: string;
+  position: number;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class TaskService {
+  private http = inject(HttpClient);
+  private baseUrl = `${environment.apiUrl}/cards`;
 
-  private mockTasks: Task[] = [
-    // To Do Tasks
-    {
-      id: '1',
-      title: 'Card name',
-      description: 'Task descriptions should be unambiguous, accurate, factual, comprehensive, correct and uniformly designed.',
-      status: TaskStatus.TODO,
-      priority: TaskPriority.MEDIUM,
-      dueDate: 'Wed, 19 Apr',
-      createdAt: '2024-04-15T10:00:00Z',
-      updatedAt: '2024-04-15T10:00:00Z'
-    },
-    {
-      id: '2',
-      title: 'Card name',
-      description: 'Task descriptions should be unambiguous, accurate, factual.',
-      status: TaskStatus.TODO,
-      priority: TaskPriority.HIGH,
-      dueDate: 'Wed, 19 Apr',
-      createdAt: '2024-04-15T11:00:00Z',
-      updatedAt: '2024-04-15T11:00:00Z'
-    },
-    {
-      id: '3',
-      title: 'Card name',
-      description: 'Task descriptions should be unambiguous, accurate, factual.',
-      status: TaskStatus.TODO,
-      priority: TaskPriority.LOW,
-      dueDate: 'Wed, 19 Apr',
-      createdAt: '2024-04-15T12:00:00Z',
-      updatedAt: '2024-04-15T12:00:00Z'
-    },
-    
-    // Planned Tasks
-    {
-      id: '4',
-      title: 'Card name',
-      description: 'Task descriptions should be unambiguous, accurate, factual, comprehensive, correct and uniformly designed.',
-      status: TaskStatus.PLANNED,
-      priority: TaskPriority.LOW,
-      dueDate: 'Wed, 19 Apr',
-      createdAt: '2024-04-15T13:00:00Z',
-      updatedAt: '2024-04-15T13:00:00Z'
-    },
-    
-    // In Progress Tasks
-    {
-      id: '5',
-      title: 'Card name',
-      description: 'Task descriptions should be unambiguous, accurate, factual, comprehensive, correct and uniformly designed.',
-      status: TaskStatus.IN_PROGRESS,
-      priority: TaskPriority.HIGH,
-      dueDate: 'Wed, 19 Apr',
-      createdAt: '2024-04-15T14:00:00Z',
-      updatedAt: '2024-04-15T14:00:00Z'
-    },
-    {
-      id: '6',
-      title: 'Card name',
-      description: 'Task descriptions should be unambiguous, accurate, factual, comprehensive, correct and uniformly designed.',
-      status: TaskStatus.IN_PROGRESS,
-      priority: TaskPriority.LOW,
-      dueDate: 'Wed, 19 Apr',
-      createdAt: '2024-04-15T15:00:00Z',
-      updatedAt: '2024-04-15T15:00:00Z'
-    },
-    {
-      id: '7',
-      title: 'Card name',
-      description: 'Task descriptions should be unambiguous, accurate, factual, comprehensive, correct and uniformly designed.',
-      status: TaskStatus.IN_PROGRESS,
-      priority: TaskPriority.LOW,
-      dueDate: 'Wed, 19 Apr',
-      createdAt: '2024-04-15T16:00:00Z',
-      updatedAt: '2024-04-15T16:00:00Z'
-    },
-    
-    // Closed Tasks
-    {
-      id: '8',
-      title: 'Card name',
-      description: 'Task descriptions should be unambiguous, accurate, factual, comprehensive, correct and uniformly designed.',
-      status: TaskStatus.CLOSED,
-      priority: TaskPriority.MEDIUM,
-      dueDate: 'Wed, 19 Apr',
-      createdAt: '2024-04-15T17:00:00Z',
-      updatedAt: '2024-04-15T17:00:00Z'
-    },
-    {
-      id: '9',
-      title: 'Card name',
-      description: 'Task descriptions should be unambiguous, accurate, factual, comprehensive, correct and uniformly designed.',
-      status: TaskStatus.CLOSED,
-      priority: TaskPriority.HIGH,
-      dueDate: 'Wed, 19 Apr',
-      createdAt: '2024-04-15T18:00:00Z',
-      updatedAt: '2024-04-15T18:00:00Z'
-    }
-  ];
 
   getTasks(): Observable<Task[]> {
-    return of(this.mockTasks);
+    return this.http.get<Task[]>(this.baseUrl).pipe(
+      catchError(error => {
+        console.error('Error loading tasks:', error);
+        return of([]);
+      })
+    );
   }
 
   getTasksByStatus(status: TaskStatus): Observable<Task[]> {
-    return of(this.mockTasks.filter(task => task.status === status));
+    return this.getTasks().pipe(
+      map(tasks => tasks.filter(task => task.status === status))
+    );
   }
 
-  getTaskColumns(): Observable<TaskColumn[]> {
-    const columns: TaskColumn[] = [
-      {
-        id: TaskStatus.TODO,
-        title: 'To Do',
-        tasks: this.mockTasks.filter(task => task.status === TaskStatus.TODO),
-        count: this.mockTasks.filter(task => task.status === TaskStatus.TODO).length
-      },
-      {
-        id: TaskStatus.PLANNED,
-        title: 'Planned',
-        tasks: this.mockTasks.filter(task => task.status === TaskStatus.PLANNED),
-        count: this.mockTasks.filter(task => task.status === TaskStatus.PLANNED).length
-      },
-      {
-        id: TaskStatus.IN_PROGRESS,
-        title: 'In Progress',
-        tasks: this.mockTasks.filter(task => task.status === TaskStatus.IN_PROGRESS),
-        count: this.mockTasks.filter(task => task.status === TaskStatus.IN_PROGRESS).length
-      },
-      {
-        id: TaskStatus.CLOSED,
-        title: 'Closed',
-        tasks: this.mockTasks.filter(task => task.status === TaskStatus.CLOSED),
-        count: this.mockTasks.filter(task => task.status === TaskStatus.CLOSED).length
-      }
-    ];
+  getTasksByListId(listId: string): Observable<Task[]> {
+    return this.http.get<Task[]>(`${this.baseUrl}/by-list/${listId}`);
+  }
 
-    return of(columns);
+  createTask(taskData: CreateTaskRequest): Observable<Task> {
+    return this.http.post<Task>(this.baseUrl, taskData);
+  }
+
+  updateTask(taskId: string, taskData: UpdateTaskRequest): Observable<Task> {
+    return this.http.put<Task>(`${this.baseUrl}/${taskId}`, taskData);
+  }
+
+  moveTask(taskId: string, moveData: MoveTaskRequest): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/${taskId}/move`, moveData);
+  }
+
+  deleteTask(taskId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${taskId}`);
   }
 
   updateTaskStatus(taskId: string, newStatus: TaskStatus): Observable<Task> {
-    const task = this.mockTasks.find(t => t.id === taskId);
-    if (task) {
-      task.status = newStatus;
-      task.updatedAt = new Date().toISOString();
-    }
-    return of(task!);
+    // Get current task data to preserve other fields
+    return this.getTasks().pipe(
+      map(tasks => {
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) throw new Error('Task not found');
+        
+        const updateData: UpdateTaskRequest = {
+          title: task.title,
+          description: task.description,
+          status: newStatus,
+          priority: task.priority,
+          dueDate: task.dueDate,
+          position: task.position,
+          assigneeId: task.assigneeId,
+          listId: task.listId,
+          projectId: task.projectId
+        };
+        
+        return this.updateTask(taskId, updateData);
+      }),
+      switchMap(updateObservable => updateObservable)
+    );
   }
 
   getPriorityClass(priority: TaskPriority): string {
     switch (priority) {
-      case TaskPriority.LOW:
+      case TaskPriority.Low:
         return 'bg-gray-100 text-gray-600';
-      case TaskPriority.MEDIUM:
+      case TaskPriority.Medium:
         return 'bg-blue-100 text-blue-600';
-      case TaskPriority.HIGH:
+      case TaskPriority.High:
         return 'bg-orange-100 text-orange-600';
-      case TaskPriority.CRITICAL:
+      case TaskPriority.Critical:
         return 'bg-red-100 text-red-600';
       default:
         return 'bg-gray-100 text-gray-600';
@@ -172,16 +119,31 @@ export class TaskService {
 
   getPriorityDotClass(priority: TaskPriority): string {
     switch (priority) {
-      case TaskPriority.LOW:
+      case TaskPriority.Low:
         return 'bg-gray-400';
-      case TaskPriority.MEDIUM:
+      case TaskPriority.Medium:
         return 'bg-blue-400';
-      case TaskPriority.HIGH:
+      case TaskPriority.High:
         return 'bg-orange-400';
-      case TaskPriority.CRITICAL:
+      case TaskPriority.Critical:
         return 'bg-red-400';
       default:
         return 'bg-gray-400';
+    }
+  }
+
+  getPriorityDisplayName(priority: TaskPriority): string {
+    switch (priority) {
+      case TaskPriority.Low:
+        return 'Low';
+      case TaskPriority.Medium:
+        return 'Medium';
+      case TaskPriority.High:
+        return 'High';
+      case TaskPriority.Critical:
+        return 'Critical';
+      default:
+        return 'Unknown';
     }
   }
 }
