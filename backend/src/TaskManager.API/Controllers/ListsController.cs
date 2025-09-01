@@ -77,6 +77,14 @@ public class ListsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPost("reorder")]
+    public async Task<ActionResult<IEnumerable<ListDto>>> ReorderLists([FromBody] ReorderListsRequest request)
+    {
+        var command = new ReorderListsCommand(request.ListIds);
+        var lists = await _mediator.Send(command);
+        return Ok(lists);
+    }
 }
 
 public class CreateListRequest
@@ -89,4 +97,9 @@ public class UpdateListRequest
 {
     public string Title { get; set; } = string.Empty;
     public int Position { get; set; }
+}
+
+public class ReorderListsRequest
+{
+    public List<Guid> ListIds { get; set; } = new();
 }

@@ -78,10 +78,48 @@
       </div>
     } @else {
       <!-- List Columns -->
-      @for (column of listColumns$ | async; track trackByListId($index, column)) {
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full w-80 flex-shrink-0">
+      @for (column of listColumns$ | async; track trackByListId($index, column); let i = $index) {
+        <!-- Drop zone before each list -->
+        <div class="w-2 flex-shrink-0 h-full relative list-drop-zone"
+             (dragover)="onDragOver($event)"
+             (dragenter)="onListDropZoneEnter($event, i)"
+             (dragleave)="onListDropZoneLeave($event)"
+             (drop)="onListDrop($event, i)"
+             [class.bg-blue-400]="isDragOverPosition === i"
+             [class.rounded]="isDragOverPosition === i"
+             [class.drag-over]="isDragOverPosition === i">
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full w-80 flex-shrink-0 list-column relative"
+             [class.opacity-50]="draggedList === column.id">
+          
+          <!-- List container drop zone overlay -->
+          <div class="absolute inset-0 pointer-events-none list-container-drop-zone"
+               [class.pointer-events-auto]="draggedList !== null && draggedList !== column.id"
+               [class.drop-target-active]="dragOverListIndex === i"
+               (dragenter)="onListContainerEnter($event, i)"
+               (dragleave)="onListContainerLeave($event, i)"
+               (dragover)="onDragOver($event)"
+               (drop)="onListContainerDrop($event, i)">
+            <!-- Insertion indicator -->
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 opacity-0 transition-opacity duration-200"
+                 [class.opacity-100]="dragOverListIndex === i">
+            </div>
+            
+            <!-- Helper text for drop target -->
+            @if (dragOverListIndex === i) {
+              <div class="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-md opacity-90 pointer-events-none">
+                Drop to insert here
+              </div>
+            }
+          </div>
           <!-- Column Header -->
-          <div class="p-4 border-b border-gray-200 flex-shrink-0">
+          <div class="p-4 border-b border-gray-200 flex-shrink-0 list-header cursor-grab hover:cursor-grab"
+               [draggable]="(editingListId$ | async) !== column.id"
+               (dragstart)="onListDragStart($event, column.id)"
+               (dragend)="onListDragEnd($event)"
+               [class.cursor-grabbing]="draggedList === column.id"
+               [class.cursor-grab]="draggedList !== column.id && (editingListId$ | async) !== column.id">
             @if ((editingListId$ | async) === column.id) {
               <!-- Edit Mode -->
               <div class="mb-2">
@@ -188,6 +226,19 @@
               </div>
             }
           </div>
+        </div>
+      }
+
+      <!-- Final drop zone after all lists -->
+      @if (listColumnsCount > 0) {
+        <div class="w-2 flex-shrink-0 h-full relative list-drop-zone"
+             (dragover)="onDragOver($event)"
+             (dragenter)="onListDropZoneEnter($event, listColumnsCount)"
+             (dragleave)="onListDropZoneLeave($event)"
+             (drop)="onListDrop($event, listColumnsCount)"
+             [class.bg-blue-400]="isDragOverPosition === listColumnsCount"
+             [class.rounded]="isDragOverPosition === listColumnsCount"
+             [class.drag-over]="isDragOverPosition === listColumnsCount">
         </div>
       }
 

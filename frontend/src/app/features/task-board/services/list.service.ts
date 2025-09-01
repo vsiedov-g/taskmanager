@@ -54,9 +54,10 @@ export class ListService {
   }
 
   reorderLists(listIds: string[]): Observable<List[]> {
-    // For now, return updated lists after individual position updates
-    // TODO: Implement bulk reorder endpoint in backend if needed
-    return this.getLists();
+    const requestData = {
+      listIds: listIds
+    };
+    return this.http.post<List[]>(`${this.baseUrl}/reorder`, requestData);
   }
 
   getListColumns(tasks: Task[]): Observable<ListColumn[]> {

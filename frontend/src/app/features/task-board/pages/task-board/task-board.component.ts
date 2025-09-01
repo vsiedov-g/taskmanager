@@ -72,11 +72,15 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
   
   // List drag and drop state
   draggedList: string | null = null;
-  isDragOverPosition: number | null = null;
+  isDragOverPosition: number | null = null;  // For precision drop zones between lists
+  dragOverListIndex: number | null = null;   // For easy drop zones on list containers
   dragPreviewElement: HTMLElement | null = null;
   
   // History sidebar state
   isHistorySidebarOpen = false;
+  
+  // List columns count for drag and drop
+  listColumnsCount = 0;
   
   // Enum reference for template
   TaskStatus = TaskStatus;
@@ -108,6 +112,13 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
     // Load lists and tasks on component initialization
     this.store.dispatch(ListActions.loadLists());
     this.store.dispatch(TaskActions.loadTasks());
+    
+    // Subscribe to list columns to track count
+    this.listColumns$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(columns => {
+      this.listColumnsCount = columns.length;
+    });
   }
 
   ngOnDestroy(): void {
@@ -266,7 +277,12 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
 
   onDragEnter(event: DragEvent, listId: string): void {
     event.preventDefault();
-    this.isDragOverList = listId;
+    
+    // Only highlight for task drops, not list drops
+    const dragData = this.getDragData(event);
+    if (dragData?.type !== 'list') {
+      this.isDragOverList = listId;
+    }
   }
 
   onDragLeave(event: DragEvent, listId: string): void {
@@ -285,6 +301,12 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
 
     try {
       const dragData = JSON.parse(event.dataTransfer!.getData('text/plain'));
+      
+      // Handle list drops - ignore them here, they should use list drop zones
+      if (dragData.type === 'list') {
+        return;
+      }
+      
       const { taskId, fromListId } = dragData;
 
       // Don't do anything if dropped on the same list
@@ -329,6 +351,7 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
   onListDragEnd(event: DragEvent): void {
     this.draggedList = null;
     this.isDragOverPosition = null;
+    this.dragOverListIndex = null;
     
     // Clean up drag preview
     if (this.dragPreviewElement) {
@@ -373,38 +396,84 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
 
       const { listId } = dragData;
       
-      // Get current lists to calculate new positions
-      this.sortedLists$.pipe(
-        take(1)
-      ).subscribe(currentLists => {
-        const draggedListIndex = currentLists.findIndex(list => list.id === listId);
-        if (draggedListIndex === -1) return;
-
-        // Don't move if dropping in the same position
-        if (draggedListIndex === targetPosition || draggedListIndex === targetPosition - 1) {
-          return;
-        }
-
-        // Calculate new positions for all affected lists
-        const updatedLists = [...currentLists];
-        const [draggedList] = updatedLists.splice(draggedListIndex, 1);
-        updatedLists.splice(targetPosition, 0, draggedList);
-
-        // Update positions
-        const listUpdates = updatedLists.map((list, index) => ({
-          id: list.id,
-          position: index
-        }));
-
-        // Dispatch bulk position update
-        this.store.dispatch(ListActions.reorderLists({ 
-          listIds: listUpdates.map(u => u.id)
-        }));
-      });
+      // Use shared reorder logic for precision drops (between lists)
+      this.handleListReorder(listId, targetPosition);
 
     } catch (error) {
       console.error('Error processing list drop:', error);
     }
+  }
+
+  // List container drop handlers (for easy drops)
+  onListContainerEnter(event: DragEvent, targetIndex: number): void {
+    event.preventDefault();
+    const dragData = this.getDragData(event);
+    
+    // Only respond to list drag operations
+    if (dragData?.type === 'list') {
+      this.dragOverListIndex = targetIndex;
+      // Clear precision drop zone highlighting
+      this.isDragOverPosition = null;
+    }
+  }
+
+  onListContainerLeave(event: DragEvent, targetIndex: number): void {
+    // Only clear if we're actually leaving the container
+    const target = event.relatedTarget as HTMLElement;
+    const currentTarget = event.currentTarget as HTMLElement;
+    
+    if (!currentTarget.contains(target)) {
+      this.dragOverListIndex = null;
+    }
+  }
+
+  onListContainerDrop(event: DragEvent, targetIndex: number): void {
+    event.preventDefault();
+    this.dragOverListIndex = null;
+
+    try {
+      const dragData = JSON.parse(event.dataTransfer!.getData('text/plain'));
+      if (dragData.type !== 'list') {
+        return;
+      }
+
+      const { listId } = dragData;
+      
+      // Insert BEFORE the target list (this is the key difference from precision drops)
+      this.handleListReorder(listId, targetIndex);
+
+    } catch (error) {
+      console.error('Error processing list container drop:', error);
+    }
+  }
+
+  // Common list reorder logic
+  private handleListReorder(draggedListId: string, targetPosition: number): void {
+    // Get current lists to calculate new positions
+    this.sortedLists$.pipe(
+      take(1)
+    ).subscribe(currentLists => {
+      const draggedListIndex = currentLists.findIndex(list => list.id === draggedListId);
+      if (draggedListIndex === -1) return;
+
+      // Don't move if dropping in the same position
+      if (draggedListIndex === targetPosition || draggedListIndex === targetPosition - 1) {
+        return;
+      }
+
+      // Calculate new positions for all affected lists
+      const updatedLists = [...currentLists];
+      const [draggedList] = updatedLists.splice(draggedListIndex, 1);
+      updatedLists.splice(targetPosition, 0, draggedList);
+
+      // Update positions
+      const listUpdates = updatedLists.map(list => list.id);
+
+      // Dispatch bulk position update
+      this.store.dispatch(ListActions.reorderLists({ 
+        listIds: listUpdates
+      }));
+    });
   }
 
   private getDragData(event: DragEvent): any {
