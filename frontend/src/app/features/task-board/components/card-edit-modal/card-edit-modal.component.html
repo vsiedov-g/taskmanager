@@ -284,9 +284,6 @@
                         <div class="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
                         <div class="flex-1">
                           <div class="text-sm text-gray-700">{{ formatActivityDescription(activityLog) }}</div>
-                          @if (activityLog.description && activityLog.description !== formatActivityDescription(activityLog)) {
-                            <div class="text-xs text-gray-500 mt-1">{{ activityLog.description }}</div>
-                          }
                         </div>
                       </div>
                       <div class="text-xs text-gray-500 whitespace-nowrap ml-2">{{ getRelativeTime(activityLog.createdAt) }}</div>
