@@ -8,6 +8,10 @@ import { takeUntil, take, filter } from 'rxjs/operators';
 import { combineLatest } from 'rxjs';
 
 import { AuthService, User } from '../../../../core/services/auth.service';
+import { BoardService } from '../../../../core/services/board.service';
+import { BoardRefreshService } from '../../../../core/services/board-refresh.service';
+import { Board } from '../../../../core/models/board.model';
+import { BoardSelectorComponent } from '../../../../shared/components/board-selector/board-selector.component';
 
 import { Task, TaskStatus } from '../../models/task.model';
 import { List, ListColumn, CreateListRequest } from '../../models/list.model';
@@ -36,7 +40,7 @@ import {
 @Component({
   selector: 'app-task-board',
   standalone: true,
-  imports: [CommonModule, FormsModule, TaskCardComponent, CardCreationModalComponent, CardEditModalComponent, HistorySidebarComponent],
+  imports: [CommonModule, FormsModule, TaskCardComponent, CardCreationModalComponent, CardEditModalComponent, HistorySidebarComponent, BoardSelectorComponent],
   templateUrl: './task-board.component.html',
   styleUrl: './task-board.component.scss'
 })
@@ -45,11 +49,15 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
   
   private store = inject(Store);
   private authService = inject(AuthService);
+  private boardService = inject(BoardService);
+  private boardRefreshService = inject(BoardRefreshService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
 
   currentUser: User | null = null;
+  currentBoard: Board | null = null;
+  currentBoardId: string | null = null;
   
   // Observables
   listColumns$: Observable<ListColumn[]>;
@@ -93,6 +101,9 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
   // History sidebar state
   isHistorySidebarOpen = false;
   
+  // Copy functionality state
+  headerCopiedMessage: string | null = null;
+  
   // List columns count for drag and drop
   listColumnsCount = 0;
   
@@ -123,9 +134,30 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
       this.currentUser = user;
     });
 
-    // Load lists and tasks on component initialization
-    this.store.dispatch(ListActions.loadLists());
-    this.store.dispatch(TaskActions.loadTasks());
+    // Handle board context from query params
+    this.route.queryParams.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(params => {
+      const boardId = params['boardId'];
+      if (boardId && boardId !== this.currentBoardId) {
+        this.currentBoardId = boardId;
+        this.loadBoardDetails();
+        // Load lists and tasks for the specific board
+        this.store.dispatch(ListActions.loadLists({ boardId }));
+        this.store.dispatch(TaskActions.loadTasks());
+      } else if (!boardId) {
+        // No board selected, redirect to boards
+        this.router.navigate(['/boards']);
+        return;
+      }
+    });
+
+    // Check if we have a boardId on initial load
+    const boardId = this.route.snapshot.queryParams['boardId'];
+    if (!boardId) {
+      this.router.navigate(['/boards']);
+      return;
+    }
     
     // Check for task ID parameter and open modal if present
     this.route.paramMap.pipe(
@@ -149,7 +181,10 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
           } else {
             // Task not found after loading completed, navigate back to task-board
             console.warn(`Task with ID ${taskId} not found`);
-            this.router.navigate(['/task-board'], { replaceUrl: true });
+            this.router.navigate(['/task-board'], { 
+              queryParams: { boardId: this.currentBoardId },
+              replaceUrl: true 
+            });
           }
         });
       }
@@ -160,6 +195,16 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(columns => {
       this.listColumnsCount = columns.length;
+    });
+
+    // Subscribe to board membership changes
+    this.boardRefreshService.boardMembershipChanged$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((boardId) => {
+      // Refresh board data if the change affects the current board
+      if (!boardId || boardId === this.currentBoardId) {
+        this.refreshBoardData();
+      }
     });
   }
 
@@ -196,7 +241,15 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
 
   onCardClicked(task: Task): void {
     // Navigate to the task route which will trigger the modal opening
-    this.router.navigate(['/task', task.id]);
+    console.log('/task/' + task.id)
+    this.router.navigate(['/task', task.id], { 
+      queryParams: { boardId: this.currentBoardId }
+    });
+  }
+
+  // Public method to refresh board data - can be called when membership changes
+  refreshBoardData(): void {
+    this.loadBoardDetails();
   }
 
   // Helper method to refresh tasks manually if needed
@@ -224,7 +277,7 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
   }
 
   onSaveNewList(): void {
-    if (this.newListTitle.trim()) {
+    if (this.newListTitle.trim() && this.currentBoardId) {
       // Get current lists to calculate next position
       this.sortedLists$.pipe(
         take(1)
@@ -234,8 +287,9 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
           : 0;
 
         const listData: CreateListRequest = {
-          name: this.newListTitle.trim(),
-          position: nextPosition
+          title: this.newListTitle.trim(),
+          position: nextPosition,
+          boardId: this.currentBoardId || ''
         };
         
         this.store.dispatch(ListActions.createList({ listData }));
@@ -629,10 +683,80 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Authentication methods
-  onSignOut(): void {
-    this.authService.signOut();
-    this.router.navigate(['/auth/sign-in']);
+  // Board context methods
+  loadBoardDetails(): void {
+    if (this.currentBoardId) {
+      this.boardService.getBoardDetails(this.currentBoardId).subscribe({
+        next: (boardDetails) => {
+          this.currentBoard = {
+            id: boardDetails.id,
+            name: boardDetails.name,
+            description: boardDetails.description,
+            joinCode: boardDetails.joinCode,
+            ownerId: boardDetails.ownerId,
+            createdAt: boardDetails.createdAt,
+            userRole: boardDetails.userRole,
+            memberCount: boardDetails.members.length
+          };
+        },
+        error: (error) => {
+          console.error('Failed to load board details:', error);
+          // If board not found or access denied, redirect to boards
+          this.router.navigate(['/boards']);
+        }
+      });
+    }
   }
+
+  onBoardSelected(board: Board): void {
+    this.currentBoard = board;
+    this.currentBoardId = board.id;
+    // Reload lists and tasks for the new board
+    this.store.dispatch(ListActions.loadLists({ boardId: board.id }));
+    this.store.dispatch(TaskActions.loadTasks());
+  }
+
+  async copyJoinCode(joinCode: string): Promise<void> {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(joinCode);
+      } else {
+        this.fallbackCopyText(joinCode);
+      }
+      
+      this.headerCopiedMessage = 'Copied!';
+      setTimeout(() => {
+        this.headerCopiedMessage = null;
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy join code:', err);
+      this.fallbackCopyText(joinCode);
+      
+      this.headerCopiedMessage = 'Copied!';
+      setTimeout(() => {
+        this.headerCopiedMessage = null;
+      }, 2000);
+    }
+  }
+
+  private fallbackCopyText(text: string): void {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.error('Fallback copy failed:', err);
+    } finally {
+      document.body.removeChild(textArea);
+    }
+  }
+
 
 }

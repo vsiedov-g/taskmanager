@@ -18,6 +18,8 @@ public static class ConfigureServices
 
         // Register repositories
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IBoardRepository, BoardRepository>();
+        services.AddScoped<IBoardMemberRepository, BoardMemberRepository>();
         services.AddScoped<IListRepository, ListRepository>();
         services.AddScoped<ICardRepository, CardRepository>();
         services.AddScoped<IActivityLogRepository, ActivityLogRepository>();
@@ -26,6 +28,7 @@ public static class ConfigureServices
         // Register services
         services.AddScoped<IActivityLogService, ActivityLogService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<IJoinCodeService, JoinCodeService>();
         services.AddHttpContextAccessor();
 
         // Register Slack services

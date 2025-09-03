@@ -5,7 +5,7 @@ export const ListActions = createActionGroup({
   source: 'List',
   events: {
     // Load lists
-    'Load Lists': emptyProps(),
+    'Load Lists': props<{ boardId: string }>(),
     'Load Lists Success': props<{ lists: List[] }>(),
     'Load Lists Failure': props<{ error: string }>(),
 
@@ -46,6 +46,6 @@ export const ListActions = createActionGroup({
 
     // Cache management
     'Clear List Cache': emptyProps(),
-    'Refresh Lists': emptyProps()
+    'Refresh Lists': props<{ boardId: string }>()
   }
 });

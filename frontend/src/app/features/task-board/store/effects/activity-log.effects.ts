@@ -112,8 +112,8 @@ export class ActivityLogEffects {
   loadRecentActivityLogs$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ActivityLogActions.loadRecentActivityLogs),
-      switchMap(({ page = 1, pageSize = 20 }) =>
-        this.activityLogService.getRecentActivityLogs(page, pageSize).pipe(
+      switchMap(({ boardId, page = 1, pageSize = 20 }) =>
+        this.activityLogService.getRecentActivityLogs(boardId, page, pageSize).pipe(
           map(activityLogs =>
             ActivityLogActions.loadRecentActivityLogsSuccess({ activityLogs, isLoadMore: page > 1 })
           ),
@@ -134,9 +134,9 @@ export class ActivityLogEffects {
         this.store.select(selectActivityLogCurrentPage),
         this.store.select(selectActivityLogPageSize)
       ),
-      switchMap(([_, currentPage, pageSize]) => {
+      switchMap(([{ boardId }, currentPage, pageSize]) => {
         const nextPage = currentPage + 1;
-        return this.activityLogService.getRecentActivityLogs(nextPage, pageSize).pipe(
+        return this.activityLogService.getRecentActivityLogs(boardId, nextPage, pageSize).pipe(
           map(activityLogs =>
             ActivityLogActions.loadMoreRecentActivityLogsSuccess({ activityLogs })
           ),

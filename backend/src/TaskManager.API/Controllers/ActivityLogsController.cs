@@ -20,14 +20,25 @@ public class ActivityLogsController : ControllerBase
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ActivityLog>>> GetActivityLogs(
+        [FromQuery] Guid? boardId = null,
         [FromQuery] int page = 1, 
         [FromQuery] int pageSize = 50)
     {
         var skip = (page - 1) * pageSize;
         
-        return await _context.ActivityLogs
+        var query = _context.ActivityLogs
             .Include(a => a.User)
             .Include(a => a.Card)
+                .ThenInclude(c => c!.List)
+            .AsQueryable();
+
+        // Filter by boardId if provided
+        if (boardId.HasValue)
+        {
+            query = query.Where(a => a.Card != null && a.Card.List.BoardId == boardId.Value);
+        }
+        
+        return await query
             .OrderByDescending(a => a.CreatedAt)
             .Skip(skip)
             .Take(pageSize)

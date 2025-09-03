@@ -6,6 +6,7 @@ public interface IListRepository
 {
     Task<IEnumerable<List>> GetAllAsync();
     Task<IEnumerable<List>> GetAllWithCardsAsync();
+    Task<IEnumerable<List>> GetAllWithCardsByBoardIdAsync(Guid boardId);
     Task<List?> GetByIdAsync(Guid id);
     Task<List?> GetByIdWithCardsAsync(Guid id);
     Task AddAsync(List list);

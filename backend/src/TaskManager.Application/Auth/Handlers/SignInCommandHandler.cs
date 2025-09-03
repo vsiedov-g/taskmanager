@@ -27,15 +27,15 @@ public class SignInCommandHandler : IRequestHandler<SignInCommand, AuthResponse>
 
     public async Task<AuthResponse> Handle(SignInCommand request, CancellationToken cancellationToken)
     {
-        var user = await _userRepository.GetByEmailAsync(request.Email);
+        var user = await _userRepository.GetByNameAsync(request.Name);
         if (user == null)
         {
-            throw new UnauthorizedAccessException("Invalid email or password");
+            throw new UnauthorizedAccessException("Invalid name or password");
         }
 
         if (!_passwordService.VerifyPassword(request.Password, user.PasswordHash))
         {
-            throw new UnauthorizedAccessException("Invalid email or password");
+            throw new UnauthorizedAccessException("Invalid name or password");
         }
 
         var token = _jwtService.GenerateToken(user);
@@ -46,9 +46,7 @@ public class SignInCommandHandler : IRequestHandler<SignInCommand, AuthResponse>
             User = new UserDto
             {
                 Id = user.Id,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email
+                Name = user.Name
             }
         };
     }

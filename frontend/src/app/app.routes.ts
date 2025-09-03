@@ -4,13 +4,19 @@ import { authGuard } from './core/guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/auth/sign-in',
+    redirectTo: '/boards',
     pathMatch: 'full'
   },
   {
     path: 'auth',
     loadChildren: () => import('./features/auth/auth.routes')
       .then(m => m.authRoutes)
+  },
+  {
+    path: 'boards',
+    loadChildren: () => import('./features/boards/boards.routes')
+      .then(m => m.boardRoutes),
+    canActivate: [authGuard]
   },
   {
     path: 'task-board',
@@ -26,6 +32,6 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: '/auth/sign-in'
+    redirectTo: '/boards'
   }
 ];

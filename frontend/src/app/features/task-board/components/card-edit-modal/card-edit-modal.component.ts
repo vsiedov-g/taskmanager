@@ -2,16 +2,17 @@ import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { Router } from '@angular/router';
-import { Subject, Observable } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Router, ActivatedRoute } from '@angular/router';
+import { Subject, Observable, of } from 'rxjs';
+import { takeUntil, switchMap, map } from 'rxjs/operators';
 
 import { Task, TaskPriority, TaskStatus } from '../../models/task.model';
 import { List } from '../../models/list.model';
 import { ActivityLog } from '../../models/activity-log.model';
 import { TaskService } from '../../services/task.service';
-import { UserService, User } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { BoardService } from '../../../../core/services/board.service';
+import { BoardMember } from '../../../../core/models/board.model';
 import { 
   TaskActions,
   selectSortedLists,
@@ -37,9 +38,10 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
   private store = inject(Store);
   private fb = inject(FormBuilder);
   private taskService = inject(TaskService);
-  private userService = inject(UserService);
   private authService = inject(AuthService);
+  private boardService = inject(BoardService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
 
   // Form
@@ -53,7 +55,7 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
   cardActivityLogs$ = this.store.select(selectCurrentCardActivityLogs);
   isLoadingMoreLogs$ = this.store.select(selectActivityLogLoadingMore);
   hasMoreLogs$ = this.store.select(selectActivityLogHasNextPage);
-  users$ = this.userService.users$;
+  boardMembers$: Observable<BoardMember[]> = this.getBoardMembers();
   
   // Data
   priorities = [
@@ -84,9 +86,6 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Load users
-    this.userService.loadUsers().subscribe();
-    
     // Subscribe to the editing task to populate the form
     this.editingTask$
       .pipe(takeUntil(this.destroy$))
@@ -98,6 +97,20 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
           this.store.dispatch(ActivityLogActions.loadActivityLogsByCard({ cardId: task.id }));
         }
       });
+  }
+
+  private getBoardMembers(): Observable<BoardMember[]> {
+    return this.route.queryParams.pipe(
+      switchMap(params => {
+        const boardId = params['boardId'];
+        if (boardId) {
+          return this.boardService.getBoardDetails(boardId).pipe(
+            map(boardDetails => boardDetails.members)
+          );
+        }
+        return of([]);
+      })
+    );
   }
 
   ngOnDestroy(): void {
@@ -174,8 +187,11 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
 
   closeModal(): void {
     this.store.dispatch(TaskActions.closeEditCardModal());
-    // Navigate back to task-board to clean the URL
-    this.router.navigate(['/task-board']);
+    // Navigate back to task-board to clean the URL, preserving boardId
+    const boardId = this.route.snapshot.queryParams['boardId'];
+    this.router.navigate(['/task-board'], { 
+      queryParams: { boardId: boardId }
+    });
   }
 
   private markFormGroupTouched(): void {
@@ -285,7 +301,7 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
       if (currentUser && activityLog.userId === currentUser.id) {
         return 'You';
       }
-      return `${activityLog.user.firstName} ${activityLog.user.lastName}`.trim();
+      return activityLog.user.name;
     }
     return 'Unknown User';
   }
@@ -323,9 +339,5 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
     if (this.currentTask) {
       this.store.dispatch(ActivityLogActions.loadMoreActivityLogsByCard({ cardId: this.currentTask.id }));
     }
-  }
-
-  getUserDisplayName(user: User): string {
-    return this.userService.getUserDisplayName(user);
   }
 }

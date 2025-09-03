@@ -1,15 +1,18 @@
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { Store } from '@ngrx/store';
 import { of } from 'rxjs';
-import { map, exhaustMap, catchError, mergeMap, tap } from 'rxjs/operators';
+import { map, exhaustMap, catchError, mergeMap, tap, withLatestFrom } from 'rxjs/operators';
 import { TaskService } from '../../services/task.service';
 import { TaskActions } from '../actions/task.actions';
 import { ActivityLogActions } from '../actions/activity-log.actions';
 import { AppActions } from '../../../../core/store/actions/app.actions';
+import { selectQueryParam } from '../../../../core/store/selectors/router.selectors';
 
 @Injectable()
 export class TaskEffects {
   private actions$ = inject(Actions);
+  private store = inject(Store);
   private taskService = inject(TaskService);
 
   // Load tasks effect
@@ -29,7 +32,8 @@ export class TaskEffects {
   createTask$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TaskActions.createTask),
-      exhaustMap(({ task }) => {
+      withLatestFrom(this.store.select(selectQueryParam('boardId'))),
+      exhaustMap(([{ task }, boardId]) => {
         const createRequest = {
           title: task.title,
           description: task.description,
@@ -46,7 +50,7 @@ export class TaskEffects {
           mergeMap((createdTask) => [
             TaskActions.createTaskSuccess({ task: createdTask }),
             TaskActions.closeCreateCardModal(),
-            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ boardId: Array.isArray(boardId) ? boardId[0] : boardId!, page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(TaskActions.createTaskFailure({ error: error.message })))
         );
@@ -58,7 +62,8 @@ export class TaskEffects {
   updateTask$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TaskActions.updateTask),
-      exhaustMap(({ id, changes }) =>
+      withLatestFrom(this.store.select(selectQueryParam('boardId'))),
+      exhaustMap(([{ id, changes }, boardId]) =>
         this.taskService.getTasks().pipe(
           mergeMap((tasks) => {
             const currentTask = tasks.find(t => t.id === id);
@@ -82,7 +87,7 @@ export class TaskEffects {
               mergeMap((updatedTask) => [
                 TaskActions.updateTaskSuccess({ task: updatedTask }),
                 TaskActions.closeEditCardModal(),
-                ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
+                ActivityLogActions.loadRecentActivityLogs({ boardId: Array.isArray(boardId) ? boardId[0] : boardId!, page: 1, pageSize: 20 })
               ])
             );
           }),
@@ -96,11 +101,12 @@ export class TaskEffects {
   updateTaskStatus$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TaskActions.updateTaskStatus),
-      exhaustMap(({ id, status, position }) =>
+      withLatestFrom(this.store.select(selectQueryParam('boardId'))),
+      exhaustMap(([{ id, status, position }, boardId]) =>
         this.taskService.updateTaskStatus(id, status).pipe(
           mergeMap((task) => [
             TaskActions.updateTaskStatusSuccess({ task }),
-            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ boardId: Array.isArray(boardId) ? boardId[0] : boardId!, page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(TaskActions.updateTaskStatusFailure({ error: error.message })))
         )
@@ -112,12 +118,13 @@ export class TaskEffects {
   moveTask$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TaskActions.moveTask),
-      exhaustMap(({ id, listId, position }) =>
+      withLatestFrom(this.store.select(selectQueryParam('boardId'))),
+      exhaustMap(([{ id, listId, position }, boardId]) =>
         this.taskService.moveTask(id, { listId, position }).pipe(
           mergeMap(() => [
             TaskActions.moveTaskSuccess({ id }),
             TaskActions.loadTasks(), // Reload tasks to get updated state
-            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ boardId: Array.isArray(boardId) ? boardId[0] : boardId!, page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(TaskActions.moveTaskFailure({ error: error.message })))
         )
@@ -129,12 +136,13 @@ export class TaskEffects {
   deleteTask$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TaskActions.deleteTask),
-      exhaustMap(({ id }) =>
+      withLatestFrom(this.store.select(selectQueryParam('boardId'))),
+      exhaustMap(([{ id }, boardId]) =>
         this.taskService.deleteTask(id).pipe(
           mergeMap(() => [
             TaskActions.deleteTaskSuccess({ id }),
             TaskActions.closeEditCardModal(),
-            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ boardId: Array.isArray(boardId) ? boardId[0] : boardId!, page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(TaskActions.deleteTaskFailure({ error: error.message })))
         )

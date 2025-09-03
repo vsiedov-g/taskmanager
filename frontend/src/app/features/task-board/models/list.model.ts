@@ -8,8 +8,9 @@ export interface List {
 }
 
 export interface CreateListRequest {
-  name: string;
-  position?: number;
+  title: string;
+  position: number;
+  boardId: string;
 }
 
 export interface UpdateListRequest {

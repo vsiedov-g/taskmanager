@@ -34,7 +34,7 @@ export class SignUpComponent {
       this.errorMessage = '';
 
       const { username, password } = this.signUpForm.value;
-      this.authService.signUp({ username, password }).subscribe({
+      this.authService.signUp({ name: username, password }).subscribe({
         next: () => {
           this.router.navigate(['/task-board']);
         },

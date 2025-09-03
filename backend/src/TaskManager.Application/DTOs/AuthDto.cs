@@ -4,15 +4,13 @@ namespace TaskManager.Application.DTOs;
 
 public class SignInRequest
 {
-    public string Email { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
 }
 
 public class SignUpRequest
 {
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
 }
 
@@ -25,9 +23,7 @@ public class AuthResponse
 public class UserDto
 {
     public Guid Id { get; set; }
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
 }
 
 public class ListDto

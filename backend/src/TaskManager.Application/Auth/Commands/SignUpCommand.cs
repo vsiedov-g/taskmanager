@@ -3,4 +3,4 @@ using TaskManager.Application.DTOs;
 
 namespace TaskManager.Application.Auth.Commands;
 
-public record SignUpCommand(string FirstName, string LastName, string Email, string Password) : IRequest<AuthResponse>;
+public record SignUpCommand(string Name, string Password) : IRequest<AuthResponse>;

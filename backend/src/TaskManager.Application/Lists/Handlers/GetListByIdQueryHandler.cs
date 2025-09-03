@@ -37,9 +37,7 @@ public class GetListByIdQueryHandler : IRequestHandler<GetListByIdQuery, ListDto
                 Assignee = card.Assignee != null ? new UserDto
                 {
                     Id = card.Assignee.Id,
-                    FirstName = card.Assignee.FirstName,
-                    LastName = card.Assignee.LastName,
-                    Email = card.Assignee.Email
+                    Name = card.Assignee.Name
                 } : null
             }).ToList()
         };

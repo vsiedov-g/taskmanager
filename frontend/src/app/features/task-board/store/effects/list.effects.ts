@@ -1,13 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap, tap, withLatestFrom } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 import { ListService } from '../../services/list.service';
 import { ListActions } from '../actions/list.actions';
 import { TaskActions } from '../actions/task.actions';
 import { ActivityLogActions } from '../actions/activity-log.actions';
+import { selectQueryParam } from '../../../../core/store/selectors/router.selectors';
 
 @Injectable()
 export class ListEffects {
@@ -19,8 +20,8 @@ export class ListEffects {
   loadLists$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ListActions.loadLists),
-      switchMap(() =>
-        this.listService.getLists().pipe(
+      switchMap(({ boardId }) =>
+        this.listService.getLists(boardId).pipe(
           map((lists) => ListActions.loadListsSuccess({ lists })),
           catchError((error) => of(ListActions.loadListsFailure({ error: error.message })))
         )
@@ -32,11 +33,12 @@ export class ListEffects {
   createList$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ListActions.createList),
-      switchMap(({ listData }) =>
+      withLatestFrom(this.store.select(selectQueryParam('boardId'))),
+      switchMap(([{ listData }, boardId]) =>
         this.listService.createList(listData).pipe(
           mergeMap((list) => [
             ListActions.createListSuccess({ list }),
-            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ boardId: Array.isArray(boardId) ? boardId[0] : boardId!, page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(ListActions.createListFailure({ error: error.message })))
         )
@@ -48,12 +50,13 @@ export class ListEffects {
   updateList$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ListActions.updateList),
-      switchMap(({ listData }) =>
+      withLatestFrom(this.store.select(selectQueryParam('boardId'))),
+      switchMap(([{ listData }, boardId]) =>
         this.listService.updateList(listData).pipe(
           mergeMap((updatedList) => [
             ListActions.updateListSuccess({ list: updatedList }),
             ListActions.cancelEditingList(), // Exit edit mode
-            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ boardId: Array.isArray(boardId) ? boardId[0] : boardId!, page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(ListActions.updateListFailure({ error: error.message })))
         )
@@ -65,7 +68,8 @@ export class ListEffects {
   deleteList$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ListActions.deleteList),
-      switchMap(({ id }) =>
+      withLatestFrom(this.store.select(selectQueryParam('boardId'))),
+      switchMap(([{ id }, boardId]) =>
         this.listService.deleteList(id).pipe(
           mergeMap(() => [
             // First delete all tasks in the list (backend handles this)
@@ -73,7 +77,7 @@ export class ListEffects {
             // Then delete the list
             ListActions.deleteListSuccess({ id }),
             // Refresh activity logs
-            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ boardId: Array.isArray(boardId) ? boardId[0] : boardId!, page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(ListActions.deleteListFailure({ error: error.message })))
         )
@@ -98,7 +102,7 @@ export class ListEffects {
   refreshLists$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ListActions.refreshLists),
-      map(() => ListActions.loadLists())
+      map(({ boardId }) => ListActions.loadLists({ boardId }))
     )
   );
 }

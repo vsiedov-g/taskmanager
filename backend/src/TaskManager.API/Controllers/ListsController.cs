@@ -20,9 +20,9 @@ public class ListsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ListDto>>> GetLists()
+    public async Task<ActionResult<IEnumerable<ListDto>>> GetLists([FromQuery] Guid boardId)
     {
-        var query = new GetListsQuery();
+        var query = new GetListsQuery(boardId);
         var lists = await _mediator.Send(query);
         return Ok(lists);
     }
@@ -44,7 +44,7 @@ public class ListsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ListDto>> CreateList([FromBody] CreateListRequest request)
     {
-        var command = new CreateListCommand(request.Title, request.Position);
+        var command = new CreateListCommand(request.Title, request.Position, request.BoardId);
         var list = await _mediator.Send(command);
 
         return CreatedAtAction(nameof(GetList), new { id = list.Id }, list);
@@ -91,6 +91,7 @@ public class CreateListRequest
 {
     public string Title { get; set; } = string.Empty;
     public int Position { get; set; }
+    public Guid BoardId { get; set; }
 }
 
 public class UpdateListRequest

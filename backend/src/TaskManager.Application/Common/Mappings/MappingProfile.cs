@@ -10,7 +10,7 @@ public class MappingProfile : Profile
     {
         CreateMap<Card, CardDto>()
             .ForMember(dest => dest.AssigneeName, opt => opt.MapFrom(src => 
-                src.Assignee != null ? $"{src.Assignee.FirstName} {src.Assignee.LastName}" : null))
+                src.Assignee != null ? src.Assignee.Name : null))
             .ForMember(dest => dest.ListName, opt => opt.MapFrom(src => src.List.Name));
 
         CreateMap<User, UserDto>();

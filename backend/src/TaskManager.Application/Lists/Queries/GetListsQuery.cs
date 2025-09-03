@@ -3,4 +3,4 @@ using TaskManager.Application.DTOs;
 
 namespace TaskManager.Application.Lists.Queries;
 
-public record GetListsQuery : IRequest<IEnumerable<ListDto>>;
+public record GetListsQuery(Guid BoardId) : IRequest<IEnumerable<ListDto>>;

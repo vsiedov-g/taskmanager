@@ -1,0 +1,8 @@
+// Component-specific styles can be added here if needed
+// Currently using TailwindCSS classes in template
+
+.board-selector {
+  // Ensure proper z-index layering for dropdown
+  position: relative;
+  z-index: 50;
+}

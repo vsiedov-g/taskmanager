@@ -11,6 +11,8 @@ public class TaskManagerContext : DbContext
 
     // Core entities
     public DbSet<User> Users { get; set; }
+    public DbSet<Board> Boards { get; set; }
+    public DbSet<BoardMember> BoardMembers { get; set; }
     public DbSet<List> Lists { get; set; }
     public DbSet<Card> Cards { get; set; }
     public DbSet<ActivityLog> ActivityLogs { get; set; }
@@ -20,6 +22,8 @@ public class TaskManagerContext : DbContext
         base.OnModelCreating(modelBuilder);
         
         ApplyUserConfiguration(modelBuilder);
+        ApplyBoardConfiguration(modelBuilder);
+        ApplyBoardMemberConfiguration(modelBuilder);
         ApplyListConfiguration(modelBuilder);
         ApplyCardConfiguration(modelBuilder);
         ApplyActivityLogConfiguration(modelBuilder);
@@ -30,11 +34,57 @@ public class TaskManagerContext : DbContext
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Email).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
             entity.Property(e => e.PasswordHash).IsRequired();
-            entity.HasIndex(e => e.Email).IsUnique();
+            entity.HasIndex(e => e.Name).IsUnique();
+        });
+    }
+
+    private static void ApplyBoardConfiguration(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Board>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Description).HasMaxLength(1000);
+            entity.Property(e => e.JoinCode).IsRequired().HasMaxLength(6);
+            entity.Property(e => e.OwnerId).IsRequired();
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            entity.HasIndex(e => e.JoinCode).IsUnique();
+
+            // Relationships
+            entity.HasOne(e => e.Owner)
+                  .WithMany()
+                  .HasForeignKey(e => e.OwnerId)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    private static void ApplyBoardMemberConfiguration(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<BoardMember>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.BoardId).IsRequired();
+            entity.Property(e => e.UserId).IsRequired();
+            entity.Property(e => e.Role).IsRequired();
+            entity.Property(e => e.JoinedAt).IsRequired();
+
+            // Unique constraint: one user per board
+            entity.HasIndex(e => new { e.BoardId, e.UserId }).IsUnique();
+
+            // Relationships
+            entity.HasOne(e => e.Board)
+                  .WithMany(b => b.Members)
+                  .HasForeignKey(e => e.BoardId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 
@@ -45,6 +95,13 @@ public class TaskManagerContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
             entity.Property(e => e.Position).IsRequired();
+            entity.Property(e => e.BoardId).IsRequired();
+
+            // Relationships
+            entity.HasOne(e => e.Board)
+                  .WithMany(b => b.Lists)
+                  .HasForeignKey(e => e.BoardId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 
@@ -96,7 +153,7 @@ public class TaskManagerContext : DbContext
             entity.HasOne(e => e.Card)
                   .WithMany(c => c.ActivityLogs)
                   .HasForeignKey(e => e.CardId)
-                  .OnDelete(DeleteBehavior.Cascade);
+                  .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

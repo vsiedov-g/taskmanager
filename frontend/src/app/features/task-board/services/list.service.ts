@@ -14,8 +14,8 @@ export class ListService {
   private baseUrl = `${environment.apiUrl}/lists`;
 
 
-  getLists(): Observable<List[]> {
-    return this.http.get<List[]>(this.baseUrl).pipe(
+  getLists(boardId: string): Observable<List[]> {
+    return this.http.get<List[]>(`${this.baseUrl}?boardId=${boardId}`).pipe(
       map(lists => lists.sort((a, b) => a.position - b.position)),
       catchError(error => {
         console.error('Error loading lists:', error);
@@ -35,8 +35,9 @@ export class ListService {
 
   createList(listData: CreateListRequest): Observable<List> {
     const requestData = {
-      title: listData.name,
-      position: listData.position ?? 0
+      title: listData.title,
+      position: listData.position,
+      boardId: listData.boardId
     };
     return this.http.post<List>(this.baseUrl, requestData);
   }
@@ -60,8 +61,8 @@ export class ListService {
     return this.http.post<List[]>(`${this.baseUrl}/reorder`, requestData);
   }
 
-  getListColumns(tasks: Task[]): Observable<ListColumn[]> {
-    return this.getLists().pipe(
+  getListColumns(tasks: Task[], boardId: string): Observable<ListColumn[]> {
+    return this.getLists(boardId).pipe(
       map(lists => {
         return lists
           .sort((a, b) => a.position - b.position)

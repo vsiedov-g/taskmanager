@@ -2,11 +2,15 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
+import { ActivatedRoute } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 
 import { TaskPriority, TaskStatus } from '../../models/task.model';
 import { List } from '../../models/list.model';
 import { TaskService } from '../../services/task.service';
-import { UserService, User } from '../../services/user.service';
+import { BoardService } from '../../../../core/services/board.service';
+import { BoardMember } from '../../../../core/models/board.model';
 import { 
   TaskActions,
   selectSortedLists,
@@ -26,7 +30,8 @@ export class CardCreationModalComponent implements OnInit {
   private store = inject(Store);
   private fb = inject(FormBuilder);
   private taskService = inject(TaskService);
-  private userService = inject(UserService);
+  private boardService = inject(BoardService);
+  private route = inject(ActivatedRoute);
 
   // Form
   cardForm: FormGroup;
@@ -36,7 +41,7 @@ export class CardCreationModalComponent implements OnInit {
   isCreating$ = this.store.select(selectIsCreatingTask);
   error$ = this.store.select(selectTasksError);
   selectedListId$ = this.store.select(selectCreateCardModalListId);
-  users$ = this.userService.users$;
+  boardMembers$: Observable<BoardMember[]> = this.getBoardMembers();
   
   // Data
   priorities = [
@@ -61,15 +66,26 @@ export class CardCreationModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Load users
-    this.userService.loadUsers().subscribe();
-    
     // Subscribe to the selected list ID from store
     this.selectedListId$.subscribe(listId => {
       if (listId) {
         this.cardForm.patchValue({ listId });
       }
     });
+  }
+
+  private getBoardMembers(): Observable<BoardMember[]> {
+    return this.route.queryParams.pipe(
+      switchMap(params => {
+        const boardId = params['boardId'];
+        if (boardId) {
+          return this.boardService.getBoardDetails(boardId).pipe(
+            map(boardDetails => boardDetails.members)
+          );
+        }
+        return of([]);
+      })
+    );
   }
 
   onSubmit(): void {
@@ -160,7 +176,4 @@ export class CardCreationModalComponent implements OnInit {
     }
   }
 
-  getUserDisplayName(user: User): string {
-    return this.userService.getUserDisplayName(user);
-  }
 }

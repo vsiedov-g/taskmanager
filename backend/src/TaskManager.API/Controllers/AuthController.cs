@@ -21,7 +21,7 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var command = new SignInCommand(request.Email, request.Password);
+            var command = new SignInCommand(request.Name, request.Password);
             var response = await _mediator.Send(command);
             return Ok(response);
         }
@@ -40,7 +40,7 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var command = new SignUpCommand(request.FirstName, request.LastName, request.Email, request.Password);
+            var command = new SignUpCommand(request.Name, request.Password);
             var response = await _mediator.Send(command);
             return Ok(response);
         }

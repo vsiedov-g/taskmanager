@@ -75,8 +75,8 @@
               formControlName="assigneeId"
               class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white appearance-none pr-8">
               <option value="">Unassigned</option>
-              @for (user of users$ | async; track user.id) {
-                <option [value]="user.id">{{ getUserDisplayName(user) }}</option>
+              @for (member of boardMembers$ | async; track member.userId) {
+                <option [value]="member.userId">{{ member.userName }}</option>
               }
             </select>
             <svg class="w-4 h-4 text-gray-400 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -22,6 +22,6 @@ export const guestGuard = () => {
     return true;
   }
 
-  router.navigate(['/task-board']);
+  router.navigate(['/boards']);
   return false;
 };

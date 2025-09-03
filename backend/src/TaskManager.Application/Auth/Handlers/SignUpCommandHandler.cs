@@ -28,10 +28,10 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, AuthResponse>
 
     public async Task<AuthResponse> Handle(SignUpCommand request, CancellationToken cancellationToken)
     {
-        var existingUser = await _userRepository.GetByEmailAsync(request.Email);
+        var existingUser = await _userRepository.GetByNameAsync(request.Name);
         if (existingUser != null)
         {
-            throw new InvalidOperationException("User with this email already exists");
+            throw new InvalidOperationException("User with this name already exists");
         }
 
         var passwordHash = _passwordService.HashPassword(request.Password);
@@ -39,9 +39,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, AuthResponse>
         var user = new User
         {
             Id = Guid.NewGuid(),
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            Email = request.Email,
+            Name = request.Name,
             PasswordHash = passwordHash
         };
 
@@ -56,9 +54,7 @@ public class SignUpCommandHandler : IRequestHandler<SignUpCommand, AuthResponse>
             User = new UserDto
             {
                 Id = user.Id,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Email = user.Email
+                Name = user.Name
             }
         };
     }

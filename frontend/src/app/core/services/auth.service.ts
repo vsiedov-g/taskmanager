@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 
 export interface User {
   id: string;
-  username: string;
+  name: string;
 }
 
 export interface AuthResponse {
@@ -14,12 +14,12 @@ export interface AuthResponse {
 }
 
 export interface SignInRequest {
-  username: string;
+  name: string;
   password: string;
 }
 
 export interface SignUpRequest {
-  username: string;
+  name: string;
   password: string;
 }
 
@@ -60,7 +60,29 @@ export class AuthService {
 
   isAuthenticated(): boolean {
     const token = this.getToken();
-    return !!token;
+    const user = this.getCurrentUser();
+    
+    // Check if both token and user exist
+    if (!token || !user) {
+      this.signOut(); // Clean up any partial auth state
+      return false;
+    }
+    
+    // Basic JWT expiration check (optional - the server will validate)
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const isExpired = payload.exp && (Date.now() >= payload.exp * 1000);
+      if (isExpired) {
+        this.signOut();
+        return false;
+      }
+    } catch (e) {
+      // If token is malformed, sign out
+      this.signOut();
+      return false;
+    }
+    
+    return true;
   }
 
   private setAuthData(token: string, user: User): void {

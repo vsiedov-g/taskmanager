@@ -36,7 +36,7 @@ public class SlackMessageBuilder : ISlackMessageBuilder
             activityLog.Action, activityLog.EntityType);
 
         var user = await _userRepository.GetByIdAsync(activityLog.UserId);
-        var userName = $"{user?.FirstName ?? ""} {user?.LastName ?? ""}".Trim();
+        var userName = $"{user?.Name ?? ""}".Trim();
         if (string.IsNullOrEmpty(userName)) userName = "Unknown User";
 
         var card = activityLog.CardId.HasValue ? 
@@ -455,7 +455,7 @@ public class SlackMessageBuilder : ISlackMessageBuilder
         if (card?.AssigneeId != null)
         {
             var assignee = await _userRepository.GetByIdAsync(card.AssigneeId.Value);
-            assigneeName = $"{assignee?.FirstName ?? ""} {assignee?.LastName ?? ""}".Trim();
+            assigneeName = $"{assignee?.Name ?? ""}".Trim();
             if (string.IsNullOrEmpty(assigneeName)) assigneeName = "Unknown User";
         }
         

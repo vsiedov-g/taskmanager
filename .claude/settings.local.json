@@ -33,7 +33,8 @@
       "Bash(taskkill:*)",
       "Bash(dotnet ef database update:*)",
       "Bash(dotnet ef migrations:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

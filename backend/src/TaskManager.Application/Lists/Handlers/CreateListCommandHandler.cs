@@ -32,7 +32,8 @@ public class CreateListCommandHandler : IRequestHandler<CreateListCommand, ListD
         {
             Id = Guid.NewGuid(),
             Name = request.Title,
-            Position = request.Position
+            Position = request.Position,
+            BoardId = request.BoardId
         };
 
         await _listRepository.AddAsync(list);

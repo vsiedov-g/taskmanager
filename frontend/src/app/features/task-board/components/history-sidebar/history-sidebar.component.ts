@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
@@ -21,6 +21,7 @@ import { AuthService } from '../../../../core/services/auth.service';
   styleUrl: './history-sidebar.component.scss'
 })
 export class HistorySidebarComponent implements OnInit {
+  @Input() boardId!: string;
   @Output() closeSidebar = new EventEmitter<void>();
   @ViewChild('scrollContainer', { static: false }) scrollContainer!: ElementRef<HTMLDivElement>;
 
@@ -39,7 +40,11 @@ export class HistorySidebarComponent implements OnInit {
 
   ngOnInit(): void {
     // Load initial activity logs when component initializes
-    this.store.dispatch(ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 }));
+    this.store.dispatch(ActivityLogActions.loadRecentActivityLogs({ 
+      boardId: this.boardId, 
+      page: 1, 
+      pageSize: 20 
+    }));
   }
 
   onClose(): void {
@@ -48,7 +53,7 @@ export class HistorySidebarComponent implements OnInit {
 
   onShowMore(): void {
     // Load more activity logs from the API
-    this.store.dispatch(ActivityLogActions.loadMoreRecentActivityLogs());
+    this.store.dispatch(ActivityLogActions.loadMoreRecentActivityLogs({ boardId: this.boardId }));
   }
 
   onScroll(event: Event): void {
@@ -114,7 +119,7 @@ export class HistorySidebarComponent implements OnInit {
       if (currentUser && activityLog.userId === currentUser.id) {
         return 'You';
       }
-      return `${activityLog.user.firstName} ${activityLog.user.lastName}`.trim();
+      return activityLog.user.name;
     }
     return 'Unknown User';
   }

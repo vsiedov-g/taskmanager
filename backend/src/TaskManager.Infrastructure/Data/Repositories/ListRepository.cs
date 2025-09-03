@@ -29,6 +29,16 @@ public class ListRepository : IListRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<List>> GetAllWithCardsByBoardIdAsync(Guid boardId)
+    {
+        return await _context.Lists
+            .Where(l => l.BoardId == boardId)
+            .Include(l => l.Cards)
+                .ThenInclude(c => c.Assignee)
+            .OrderBy(l => l.Position)
+            .ToListAsync();
+    }
+
     public async Task<List?> GetByIdAsync(Guid id)
     {
         return await _context.Lists.FindAsync(id);

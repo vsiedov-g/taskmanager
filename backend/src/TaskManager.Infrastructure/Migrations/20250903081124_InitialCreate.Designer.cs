@@ -12,8 +12,8 @@ using TaskManager.Infrastructure.Data;
 namespace TaskManager.Infrastructure.Migrations
 {
     [DbContext(typeof(TaskManagerContext))]
-    [Migration("20250829130810_AddCardPriorityDueDateTimestampsProjectId")]
-    partial class AddCardPriorityDueDateTimestampsProjectId
+    [Migration("20250903081124_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -64,6 +64,74 @@ namespace TaskManager.Infrastructure.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("ActivityLogs");
+                });
+
+            modelBuilder.Entity("TaskManager.Domain.Entities.Board", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("JoinCode")
+                        .IsRequired()
+                        .HasMaxLength(6)
+                        .HasColumnType("character varying(6)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JoinCode")
+                        .IsUnique();
+
+                    b.HasIndex("OwnerId");
+
+                    b.ToTable("Boards");
+                });
+
+            modelBuilder.Entity("TaskManager.Domain.Entities.BoardMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BoardId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("BoardId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("BoardMembers");
                 });
 
             modelBuilder.Entity("TaskManager.Domain.Entities.Card", b =>
@@ -124,6 +192,9 @@ namespace TaskManager.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("BoardId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -134,6 +205,8 @@ namespace TaskManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BoardId");
+
                     b.ToTable("Lists");
                 });
 
@@ -143,17 +216,7 @@ namespace TaskManager.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("LastName")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -164,7 +227,7 @@ namespace TaskManager.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email")
+                    b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("Users");
@@ -188,6 +251,36 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("TaskManager.Domain.Entities.Board", b =>
+                {
+                    b.HasOne("TaskManager.Domain.Entities.User", "Owner")
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("TaskManager.Domain.Entities.BoardMember", b =>
+                {
+                    b.HasOne("TaskManager.Domain.Entities.Board", "Board")
+                        .WithMany("Members")
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TaskManager.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Board");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("TaskManager.Domain.Entities.Card", b =>
                 {
                     b.HasOne("TaskManager.Domain.Entities.User", "Assignee")
@@ -204,6 +297,24 @@ namespace TaskManager.Infrastructure.Migrations
                     b.Navigation("Assignee");
 
                     b.Navigation("List");
+                });
+
+            modelBuilder.Entity("TaskManager.Domain.Entities.List", b =>
+                {
+                    b.HasOne("TaskManager.Domain.Entities.Board", "Board")
+                        .WithMany("Lists")
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Board");
+                });
+
+            modelBuilder.Entity("TaskManager.Domain.Entities.Board", b =>
+                {
+                    b.Navigation("Lists");
+
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("TaskManager.Domain.Entities.Card", b =>

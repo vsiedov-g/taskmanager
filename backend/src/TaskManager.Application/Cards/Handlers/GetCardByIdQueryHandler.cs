@@ -32,16 +32,16 @@ public class GetCardByIdQueryHandler : IRequestHandler<GetCardByIdQuery, CardDto
             CreatedAt = card.CreatedAt,
             UpdatedAt = card.UpdatedAt,
             AssigneeId = card.AssigneeId,
-            AssigneeName = card.Assignee != null ? $"{card.Assignee.FirstName} {card.Assignee.LastName}" : null,
+            AssigneeName = card.Assignee != null ? $"{card.Assignee.Name}" : null,
             ListId = card.ListId,
             ListName = card.List?.Name ?? "",
             ProjectId = card.ProjectId,
             Assignee = card.Assignee != null ? new UserDto
             {
                 Id = card.Assignee.Id,
-                FirstName = card.Assignee.FirstName,
-                LastName = card.Assignee.LastName,
-                Email = card.Assignee.Email
+                Name = card.Assignee.Name,
+                
+                
             } : null
         };
     }

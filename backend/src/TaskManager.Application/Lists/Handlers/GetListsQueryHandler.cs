@@ -16,7 +16,7 @@ public class GetListsQueryHandler : IRequestHandler<GetListsQuery, IEnumerable<L
 
     public async Task<IEnumerable<ListDto>> Handle(GetListsQuery request, CancellationToken cancellationToken)
     {
-        var lists = await _listRepository.GetAllWithCardsAsync();
+        var lists = await _listRepository.GetAllWithCardsByBoardIdAsync(request.BoardId);
         
         return lists.Select(list => new ListDto
         {
@@ -35,9 +35,7 @@ public class GetListsQueryHandler : IRequestHandler<GetListsQuery, IEnumerable<L
                 Assignee = card.Assignee != null ? new UserDto
                 {
                     Id = card.Assignee.Id,
-                    FirstName = card.Assignee.FirstName,
-                    LastName = card.Assignee.LastName,
-                    Email = card.Assignee.Email
+                    Name = card.Assignee.Name
                 } : null
             }).ToList()
         });

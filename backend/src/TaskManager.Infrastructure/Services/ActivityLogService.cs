@@ -137,11 +137,11 @@ public class ActivityLogService : IActivityLogService
         
         if (newAssignee != null && oldAssignee != null)
         {
-            description = $"reassigned card \"{card.Title}\" from {oldAssignee.FirstName} {oldAssignee.LastName} to {newAssignee.FirstName} {newAssignee.LastName}";
+            description = $"reassigned card \"{card.Title}\" from {oldAssignee.Name}";
         }
         else if (newAssignee != null)
         {
-            description = $"assigned card \"{card.Title}\" to {newAssignee.FirstName} {newAssignee.LastName}";
+            description = $"assigned card \"{card.Title}\" to {newAssignee.Name}";
         }
         else
         {
@@ -312,7 +312,7 @@ public class ActivityLogService : IActivityLogService
                         UserId = activityLog.UserId,
                         CardId = activityLog.CardId
                     },
-                    UserName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Unknown User",
+                    UserName = user != null ? $"{user.Name}".Trim() : "Unknown User",
                     CardTitle = card?.Title,
                     CardDescription = card?.Description,
                     CardPriority = card?.Priority,

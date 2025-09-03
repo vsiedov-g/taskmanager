@@ -30,12 +30,12 @@ export const ActivityLogActions = createActionGroup({
     'Load Activity Logs By User Failure': props<{ error: string }>(),
     
     // Load recent activity logs
-    'Load Recent Activity Logs': props<{ page?: number; pageSize?: number }>(),
+    'Load Recent Activity Logs': props<{ boardId: string; page?: number; pageSize?: number }>(),
     'Load Recent Activity Logs Success': props<{ activityLogs: ActivityLog[]; isLoadMore?: boolean }>(),
     'Load Recent Activity Logs Failure': props<{ error: string }>(),
     
     // Load more recent activity logs
-    'Load More Recent Activity Logs': emptyProps(),
+    'Load More Recent Activity Logs': props<{ boardId: string }>(),
     'Load More Recent Activity Logs Success': props<{ activityLogs: ActivityLog[] }>(),
     'Load More Recent Activity Logs Failure': props<{ error: string }>(),
     

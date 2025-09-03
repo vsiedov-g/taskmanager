@@ -72,7 +72,7 @@ public class MoveCardCommandHandler : IRequestHandler<MoveCardCommand, CardDto?>
             CreatedAt = card.CreatedAt,
             UpdatedAt = card.UpdatedAt,
             AssigneeId = card.AssigneeId,
-            AssigneeName = card.Assignee?.FirstName + " " + card.Assignee?.LastName,
+            AssigneeName = card.Assignee?.Name,
             ListId = card.ListId,
             ListName = newListName,
             ProjectId = card.ProjectId

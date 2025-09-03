@@ -32,7 +32,8 @@ export class SignInComponent {
       this.isSubmitting = true;
       this.errorMessage = '';
 
-      this.authService.signIn(this.signInForm.value).subscribe({
+      const { username, password } = this.signInForm.value;
+      this.authService.signIn({ name: username, password }).subscribe({
         next: () => {
           this.router.navigate(['/task-board']);
         },
