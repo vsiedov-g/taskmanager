@@ -34,8 +34,10 @@ export class ActivityLogService {
     return this.http.get<ActivityLog[]>(`${this.baseUrl}/by-user/${userId}`);
   }
 
-  getRecentActivityLogs(count: number = 20): Observable<ActivityLog[]> {
-    const params = new HttpParams().set('pageSize', count.toString());
+  getRecentActivityLogs(page: number = 1, pageSize: number = 20): Observable<ActivityLog[]> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('pageSize', pageSize.toString());
     return this.http.get<ActivityLog[]>(this.baseUrl, { params });
   }
 

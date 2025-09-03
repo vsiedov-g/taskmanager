@@ -28,6 +28,10 @@ public static class ConfigureServices
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddHttpContextAccessor();
 
+        // Register Slack services
+        services.AddScoped<ISlackMessageBuilder, SlackMessageBuilder>();
+        services.AddScoped<ISlackRetryPolicy, SlackRetryPolicy>();
+
         return services;
     }
 }

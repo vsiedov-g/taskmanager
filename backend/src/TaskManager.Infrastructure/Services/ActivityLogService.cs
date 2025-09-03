@@ -1,4 +1,7 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using TaskManager.Application.Common.Interfaces;
+using TaskManager.Application.Common.Models;
 using TaskManager.Domain.Entities;
 using TaskManager.Domain.Interfaces;
 
@@ -8,13 +11,19 @@ public class ActivityLogService : IActivityLogService
 {
     private readonly IActivityLogRepository _activityLogRepository;
     private readonly IListRepository _listRepository;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<ActivityLogService> _logger;
 
     public ActivityLogService(
         IActivityLogRepository activityLogRepository,
-        IListRepository listRepository)
+        IListRepository listRepository,
+        IServiceProvider serviceProvider,
+        ILogger<ActivityLogService> logger)
     {
         _activityLogRepository = activityLogRepository;
         _listRepository = listRepository;
+        _serviceProvider = serviceProvider;
+        _logger = logger;
     }
 
     public async Task LogCardCreatedAsync(Card card, Guid userId)
@@ -32,6 +41,7 @@ public class ActivityLogService : IActivityLogService
         };
 
         await _activityLogRepository.AddAsync(activityLog);
+        SendSlackNotificationAsync(activityLog);
     }
 
     public async Task LogCardUpdatedAsync(Card oldCard, Card newCard, Guid userId)
@@ -78,6 +88,7 @@ public class ActivityLogService : IActivityLogService
             };
 
             await _activityLogRepository.AddAsync(activityLog);
+            SendSlackNotificationAsync(activityLog);
         }
     }
 
@@ -96,6 +107,7 @@ public class ActivityLogService : IActivityLogService
         };
 
         await _activityLogRepository.AddAsync(activityLog);
+        SendSlackNotificationAsync(activityLog);
     }
 
     public async Task LogCardDeletedAsync(Card card, Guid userId)
@@ -116,6 +128,7 @@ public class ActivityLogService : IActivityLogService
         };
 
         await _activityLogRepository.AddAsync(activityLog);
+        SendSlackNotificationAsync(activityLog);
     }
 
     public async Task LogCardAssignedAsync(Card card, User? oldAssignee, User? newAssignee, Guid userId)
@@ -148,6 +161,7 @@ public class ActivityLogService : IActivityLogService
         };
 
         await _activityLogRepository.AddAsync(activityLog);
+        SendSlackNotificationAsync(activityLog);
     }
 
     public async Task LogCardPriorityChangedAsync(Card card, CardStatus oldPriority, CardStatus newPriority, Guid userId)
@@ -165,6 +179,7 @@ public class ActivityLogService : IActivityLogService
         };
 
         await _activityLogRepository.AddAsync(activityLog);
+        SendSlackNotificationAsync(activityLog);
     }
 
     public async Task LogListCreatedAsync(List list, Guid userId)
@@ -182,6 +197,7 @@ public class ActivityLogService : IActivityLogService
         };
 
         await _activityLogRepository.AddAsync(activityLog);
+        SendSlackNotificationAsync(activityLog);
     }
 
     public async Task LogListUpdatedAsync(List oldList, List newList, Guid userId)
@@ -215,6 +231,7 @@ public class ActivityLogService : IActivityLogService
             };
 
             await _activityLogRepository.AddAsync(activityLog);
+            SendSlackNotificationAsync(activityLog);
         }
     }
 
@@ -233,6 +250,7 @@ public class ActivityLogService : IActivityLogService
         };
 
         await _activityLogRepository.AddAsync(activityLog);
+        SendSlackNotificationAsync(activityLog);
     }
 
     public async Task LogBulkCardsDeletedAsync(List<Card> cards, Guid userId, string reason = "")
@@ -258,6 +276,69 @@ public class ActivityLogService : IActivityLogService
             };
 
             await _activityLogRepository.AddAsync(activityLog);
+            SendSlackNotificationAsync(activityLog);
         }
+    }
+
+    private void SendSlackNotificationAsync(ActivityLog activityLog)
+    {
+        // Send Slack notification completely in background to avoid DbContext concurrency issues
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                // Create a new scope for database operations in background thread
+                using var scope = _serviceProvider.CreateScope();
+                var userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+                var cardRepository = scope.ServiceProvider.GetRequiredService<ICardRepository>();
+                var slackNotifier = scope.ServiceProvider.GetRequiredService<ISlackNotifier>();
+
+                // Fetch all required data with a fresh DbContext
+                var user = await userRepository.GetByIdAsync(activityLog.UserId);
+                var card = activityLog.CardId.HasValue ? 
+                    await cardRepository.GetByIdAsync(activityLog.CardId.Value) : null;
+
+                // Create a detached notification data object
+                var notificationData = new SlackNotificationData
+                {
+                    ActivityLog = new ActivityLog
+                    {
+                        Id = activityLog.Id,
+                        Action = activityLog.Action,
+                        EntityType = activityLog.EntityType,
+                        EntityId = activityLog.EntityId,
+                        Description = activityLog.Description,
+                        CreatedAt = activityLog.CreatedAt,
+                        UserId = activityLog.UserId,
+                        CardId = activityLog.CardId
+                    },
+                    UserName = user != null ? $"{user.FirstName} {user.LastName}".Trim() : "Unknown User",
+                    CardTitle = card?.Title,
+                    CardDescription = card?.Description,
+                    CardPriority = card?.Priority,
+                    CardStatus = card?.Status,
+                    CardDueDate = card?.DueDate
+                };
+
+                var result = await slackNotifier.SendActivityNotificationAsync(notificationData);
+                
+                if (result.IsSuccess)
+                {
+                    _logger.LogDebug("Slack notification sent for activity {ActivityLogId}", activityLog.Id);
+                }
+                else
+                {
+                    _logger.LogWarning("Slack notification failed for activity {ActivityLogId}: {Error}", 
+                        activityLog.Id, result.ErrorMessage);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log but don't throw - notifications shouldn't break the main flow
+                _logger.LogError(ex, 
+                    "Background Slack notification failed for ActivityLog {ActivityLogId}", 
+                    activityLog.Id);
+            }
+        });
     }
 }

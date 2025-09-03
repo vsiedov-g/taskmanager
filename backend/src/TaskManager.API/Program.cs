@@ -30,7 +30,11 @@ builder.Configuration.AddInMemoryCollection(new[]
     new KeyValuePair<string, string?>("Jwt:Secret", Environment.GetEnvironmentVariable("JWT_SECRET")),
     new KeyValuePair<string, string?>("Jwt:Issuer", Environment.GetEnvironmentVariable("JWT_ISSUER")),
     new KeyValuePair<string, string?>("Jwt:Audience", Environment.GetEnvironmentVariable("JWT_AUDIENCE")),
-    new KeyValuePair<string, string?>("CorsOrigins", Environment.GetEnvironmentVariable("CORS_ORIGINS"))
+    new KeyValuePair<string, string?>("CorsOrigins", Environment.GetEnvironmentVariable("CORS_ORIGINS")),
+    new KeyValuePair<string, string?>("Slack:WebhookUrl", Environment.GetEnvironmentVariable("SLACK_WEBHOOK_URL")),
+    new KeyValuePair<string, string?>("Slack:Channel", Environment.GetEnvironmentVariable("SLACK_CHANNEL")),
+    new KeyValuePair<string, string?>("Slack:BaseUrl", Environment.GetEnvironmentVariable("API_BASE_URL")),
+    new KeyValuePair<string, string?>("Slack:ClientBaseUrl", Environment.GetEnvironmentVariable("BASE_WEBHOOK_URL"))
 });
 
 // Add services to the container
@@ -46,6 +50,10 @@ builder.Services.AddDbContext<TaskManagerContext>(options =>
 // Add layer-specific services
 builder.Services.AddApplicationServices();
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Add Slack webhook integration
+builder.Services.Configure<TaskManager.Infrastructure.Models.SlackSettings>(builder.Configuration.GetSection("Slack"));
+builder.Services.AddHttpClient<ISlackNotifier, SlackNotifierService>();
 
 // Service registration
 builder.Services.AddScoped<IJwtService, JwtService>();
@@ -70,18 +78,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// CORS configuration
+// CORS configuration - Allow all origins
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.AddPolicy("AllowAllOrigins", policy =>
     {
-        var corsOrigins = builder.Configuration["CorsOrigins"]?.Split(',') ?? new[] { "http://localhost:4200" };
-        policy.WithOrigins(corsOrigins)
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+              .AllowAnyMethod();
     });
 });
+
+// Previous CORS configuration (commented out for reference)
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("AllowFrontend", policy =>
+//     {
+//         var corsOrigins = builder.Configuration["CorsOrigins"]?.Split(',') ?? new[] { "http://localhost:4200" };
+//         policy.WithOrigins(corsOrigins)
+//               .AllowAnyHeader()
+//               .AllowAnyMethod()
+//               .AllowCredentials();
+//     });
+// });
 
 var app = builder.Build();
 
@@ -100,7 +119,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowFrontend");
+app.UseCors("AllowAllOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

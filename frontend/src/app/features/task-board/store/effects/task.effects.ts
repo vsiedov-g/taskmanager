@@ -46,7 +46,7 @@ export class TaskEffects {
           mergeMap((createdTask) => [
             TaskActions.createTaskSuccess({ task: createdTask }),
             TaskActions.closeCreateCardModal(),
-            ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(TaskActions.createTaskFailure({ error: error.message })))
         );
@@ -82,7 +82,7 @@ export class TaskEffects {
               mergeMap((updatedTask) => [
                 TaskActions.updateTaskSuccess({ task: updatedTask }),
                 TaskActions.closeEditCardModal(),
-                ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+                ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
               ])
             );
           }),
@@ -100,7 +100,7 @@ export class TaskEffects {
         this.taskService.updateTaskStatus(id, status).pipe(
           mergeMap((task) => [
             TaskActions.updateTaskStatusSuccess({ task }),
-            ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(TaskActions.updateTaskStatusFailure({ error: error.message })))
         )
@@ -117,7 +117,7 @@ export class TaskEffects {
           mergeMap(() => [
             TaskActions.moveTaskSuccess({ id }),
             TaskActions.loadTasks(), // Reload tasks to get updated state
-            ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(TaskActions.moveTaskFailure({ error: error.message })))
         )
@@ -134,7 +134,7 @@ export class TaskEffects {
           mergeMap(() => [
             TaskActions.deleteTaskSuccess({ id }),
             TaskActions.closeEditCardModal(),
-            ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(TaskActions.deleteTaskFailure({ error: error.message })))
         )

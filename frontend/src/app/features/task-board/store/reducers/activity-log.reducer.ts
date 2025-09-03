@@ -208,27 +208,64 @@ export const activityLogReducer = createReducer(
   })),
 
   // Load Recent Activity Logs
-  on(ActivityLogActions.loadRecentActivityLogs, (state) => ({
+  on(ActivityLogActions.loadRecentActivityLogs, (state, { page = 1 }) => ({
     ...state,
     loading: true,
     error: null,
     viewMode: 'recent' as const,
     currentCardId: null,
-    currentUserId: null
+    currentUserId: null,
+    currentPage: page === 1 ? 1 : state.currentPage
   })),
 
-  on(ActivityLogActions.loadRecentActivityLogsSuccess, (state, { activityLogs }) =>
-    activityLogAdapter.setAll(activityLogs, {
-      ...state,
-      loading: false,
-      hasNextPage: false,
-      error: null
-    })
-  ),
+  on(ActivityLogActions.loadRecentActivityLogsSuccess, (state, { activityLogs, isLoadMore }) => {
+    if (isLoadMore) {
+      return activityLogAdapter.addMany(activityLogs, {
+        ...state,
+        loading: false,
+        loadingMore: false,
+        currentPage: state.currentPage + 1,
+        hasNextPage: activityLogs.length === state.pageSize,
+        error: null
+      });
+    } else {
+      return activityLogAdapter.setAll(activityLogs, {
+        ...state,
+        loading: false,
+        currentPage: 1,
+        hasNextPage: activityLogs.length === state.pageSize,
+        error: null
+      });
+    }
+  }),
 
   on(ActivityLogActions.loadRecentActivityLogsFailure, (state, { error }) => ({
     ...state,
     loading: false,
+    loadingMore: false,
+    error
+  })),
+
+  // Load More Recent Activity Logs
+  on(ActivityLogActions.loadMoreRecentActivityLogs, (state) => ({
+    ...state,
+    loadingMore: true,
+    error: null
+  })),
+
+  on(ActivityLogActions.loadMoreRecentActivityLogsSuccess, (state, { activityLogs }) =>
+    activityLogAdapter.addMany(activityLogs, {
+      ...state,
+      loadingMore: false,
+      currentPage: state.currentPage + 1,
+      hasNextPage: activityLogs.length === state.pageSize,
+      error: null
+    })
+  ),
+
+  on(ActivityLogActions.loadMoreRecentActivityLogsFailure, (state, { error }) => ({
+    ...state,
+    loadingMore: false,
     error
   })),
 

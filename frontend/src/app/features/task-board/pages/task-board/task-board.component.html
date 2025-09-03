@@ -24,7 +24,31 @@
   </div>
 
   <!-- Kanban Board -->
-  <div class="flex gap-4 flex-1 overflow-x-auto justify-center">
+  <div #boardContainer class="flex gap-4 flex-1 overflow-x-auto overflow-y-hidden relative" 
+       (wheel)="onBoardWheel($event)"
+       style="min-height: 0;">
+    
+    <!-- Left Scroll Zone Indicator -->
+    <div class="absolute left-0 top-0 bottom-0 w-25 bg-gradient-to-r from-blue-500/20 to-transparent pointer-events-none z-10 transition-opacity duration-200"
+         [class.opacity-100]="(draggedTask || draggedList) && showLeftScrollZone"
+         [class.opacity-0]="(!draggedTask && !draggedList) || !showLeftScrollZone">
+      <div class="flex items-center justify-center h-full">
+        <svg class="w-6 h-6 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </div>
+    </div>
+    
+    <!-- Right Scroll Zone Indicator -->
+    <div class="absolute right-0 top-0 bottom-0 w-25 bg-gradient-to-l from-blue-500/20 to-transparent pointer-events-none z-10 transition-opacity duration-200"
+         [class.opacity-100]="(draggedTask || draggedList) && showRightScrollZone"
+         [class.opacity-0]="(!draggedTask && !draggedList) || !showRightScrollZone">
+      <div class="flex items-center justify-center h-full">
+        <svg class="w-6 h-6 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+    </div>
     <!-- Empty Board State -->
     @if (isBoardEmpty$ | async) {
       <!-- Empty Board Placeholder -->

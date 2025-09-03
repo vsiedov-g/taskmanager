@@ -1,10 +1,11 @@
-import { Component, OnInit, OnDestroy, inject, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Observable, Subject } from 'rxjs';
-import { takeUntil, take } from 'rxjs/operators';
+import { takeUntil, take, filter } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
 
 import { AuthService, User } from '../../../../core/services/auth.service';
 
@@ -18,6 +19,7 @@ import {
   TaskActions, 
   selectTasksLoading, 
   selectTasksError,
+  selectTaskEntitiesFromState,
   ListActions,
   selectListColumns,
   selectListsLoading,
@@ -39,9 +41,12 @@ import {
   styleUrl: './task-board.component.scss'
 })
 export class TaskBoardComponent implements OnInit, OnDestroy {
+  @ViewChild('boardContainer', { static: false }) boardContainer!: ElementRef<HTMLDivElement>;
+  
   private store = inject(Store);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private destroy$ = new Subject<void>();
 
   currentUser: User | null = null;
@@ -69,6 +74,15 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
   // Drag and drop state
   isDragOverList: string | null = null;
   draggedTask: Task | null = null;
+  
+  // Auto-scroll during drag
+  private dragScrollInterval: any = null;
+  private readonly SCROLL_SPEED = 3;
+  private readonly SCROLL_ZONE_SIZE = 100;
+  
+  // Visual feedback for scroll zones
+  showLeftScrollZone = false;
+  showRightScrollZone = false;
   
   // List drag and drop state
   draggedList: string | null = null;
@@ -113,6 +127,34 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
     this.store.dispatch(ListActions.loadLists());
     this.store.dispatch(TaskActions.loadTasks());
     
+    // Check for task ID parameter and open modal if present
+    this.route.paramMap.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(params => {
+      const taskId = params.get('id');
+      if (taskId) {
+        // Wait for tasks to load and not be loading, then find and open the task
+        combineLatest([
+          this.store.select(selectTaskEntitiesFromState),
+          this.store.select(selectTasksLoading)
+        ]).pipe(
+          filter(([entities, loading]: [any, boolean]) => !loading && Object.keys(entities).length > 0),
+          take(1),
+          takeUntil(this.destroy$)
+        ).subscribe(([taskEntities, loading]: [any, boolean]) => {
+          const task = taskEntities[taskId];
+          if (task) {
+            // Open the task modal but keep the URL with task ID
+            this.store.dispatch(TaskActions.openEditCardModal({ task }));
+          } else {
+            // Task not found after loading completed, navigate back to task-board
+            console.warn(`Task with ID ${taskId} not found`);
+            this.router.navigate(['/task-board'], { replaceUrl: true });
+          }
+        });
+      }
+    });
+    
     // Subscribe to list columns to track count
     this.listColumns$.pipe(
       takeUntil(this.destroy$)
@@ -122,6 +164,8 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Clean up drag scroll monitoring
+    this.stopDragScrollMonitoring();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -151,7 +195,8 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
   }
 
   onCardClicked(task: Task): void {
-    this.store.dispatch(TaskActions.openEditCardModal({ task }));
+    // Navigate to the task route which will trigger the modal opening
+    this.router.navigate(['/task', task.id]);
   }
 
   // Helper method to refresh tasks manually if needed
@@ -194,6 +239,9 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
         };
         
         this.store.dispatch(ListActions.createList({ listData }));
+        
+        // Scroll to show the newly added list
+        this.scrollToEnd();
       });
       
       this.newListTitle = '';
@@ -263,11 +311,15 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
   // Drag and drop handlers
   onTaskDragStart(event: { task: Task, event: DragEvent }): void {
     this.draggedTask = event.task;
+    // Start monitoring mouse position for auto-scroll
+    this.startDragScrollMonitoring();
   }
 
   onTaskDragEnd(event: { task: Task, event: DragEvent }): void {
     this.draggedTask = null;
     this.isDragOverList = null;
+    // Stop auto-scroll monitoring
+    this.stopDragScrollMonitoring();
   }
 
   onDragOver(event: DragEvent): void {
@@ -491,6 +543,90 @@ export class TaskBoardComponent implements OnInit, OnDestroy {
 
   onCloseHistorySidebar(): void {
     this.isHistorySidebarOpen = false;
+  }
+
+  // Horizontal scroll support with mouse wheel
+  onBoardWheel(event: WheelEvent): void {
+    // Only handle horizontal scrolling if not already scrolling horizontally
+    if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+      event.preventDefault();
+      
+      const container = this.boardContainer.nativeElement;
+      const scrollAmount = event.deltaY > 0 ? 100 : -100;
+      
+      container.scrollBy({
+        left: scrollAmount
+      });
+    }
+  }
+
+  // Scroll to show newly added list
+  scrollToEnd(): void {
+    if (this.boardContainer?.nativeElement) {
+      const container = this.boardContainer.nativeElement;
+      setTimeout(() => {
+        container.scrollTo({
+          left: container.scrollWidth
+        });
+      }, 100);
+    }
+  }
+
+  // Auto-scroll during drag operations
+  private startDragScrollMonitoring(): void {
+    this.dragScrollInterval = setInterval(() => {
+      if (!this.draggedTask || !this.boardContainer?.nativeElement) {
+        return;
+      }
+
+      const container = this.boardContainer.nativeElement;
+      const containerRect = container.getBoundingClientRect();
+      
+      // Get current mouse position (stored during drag events)
+      const mouseX = this.currentMouseX;
+      
+      if (mouseX !== undefined) {
+        const leftEdge = containerRect.left;
+        const rightEdge = containerRect.right;
+        const scrollLeft = container.scrollLeft;
+        const scrollWidth = container.scrollWidth;
+        const containerWidth = container.clientWidth;
+        
+        // Update visual indicators
+        this.showLeftScrollZone = mouseX < leftEdge + this.SCROLL_ZONE_SIZE && scrollLeft > 0;
+        this.showRightScrollZone = mouseX > rightEdge - this.SCROLL_ZONE_SIZE && scrollLeft < scrollWidth - containerWidth;
+        
+        // Check if mouse is in left scroll zone
+        if (this.showLeftScrollZone) {
+          container.scrollLeft = Math.max(0, scrollLeft - this.SCROLL_SPEED * 5);
+        }
+        // Check if mouse is in right scroll zone
+        else if (this.showRightScrollZone) {
+          container.scrollLeft = Math.min(scrollWidth - containerWidth, scrollLeft + this.SCROLL_SPEED * 5);
+        }
+      }
+    }, 16); // ~60fps
+  }
+
+  private stopDragScrollMonitoring(): void {
+    if (this.dragScrollInterval) {
+      clearInterval(this.dragScrollInterval);
+      this.dragScrollInterval = null;
+    }
+    this.currentMouseX = undefined;
+    // Hide scroll zone indicators
+    this.showLeftScrollZone = false;
+    this.showRightScrollZone = false;
+  }
+
+  // Track mouse position during drag
+  private currentMouseX: number | undefined;
+  
+  @HostListener('window:dragover', ['$event'])
+  onWindowDragOver(event: DragEvent): void {
+    if (this.draggedTask) {
+      this.currentMouseX = event.clientX;
+    }
   }
 
   // Authentication methods

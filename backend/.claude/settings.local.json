@@ -21,7 +21,12 @@
       "Read(D:\\projects\\taskmanager\\frontend\\src/**)",
       "Read(D:\\projects\\taskmanager\\frontend\\src/**)",
       "Read(D:\\projects\\taskmanager\\frontend\\src/**)",
-      "Read(D:\\projects\\taskmanager\\frontend\\src/**)"
+      "Read(D:\\projects\\taskmanager\\frontend\\src/**)",
+      "Read(D:\\projects\\taskmanager/**)",
+      "Read(D:\\projects\\taskmanager/**)",
+      "Read(D:\\projects\\taskmanager\\specs/**)",
+      "Bash(dotnet add:*)",
+      "Read(D:\\projects\\taskmanager/**)"
     ],
     "deny": [],
     "ask": []

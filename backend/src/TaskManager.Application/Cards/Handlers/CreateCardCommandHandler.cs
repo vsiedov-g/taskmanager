@@ -10,17 +10,20 @@ namespace TaskManager.Application.Cards.Handlers;
 public class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, CardDto>
 {
     private readonly ICardRepository _cardRepository;
+    private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IActivityLogService _activityLogService;
     private readonly ICurrentUserService _currentUserService;
 
     public CreateCardCommandHandler(
         ICardRepository cardRepository,
+        IUserRepository userRepository,
         IUnitOfWork unitOfWork,
         IActivityLogService activityLogService,
         ICurrentUserService currentUserService)
     {
         _cardRepository = cardRepository;
+        _userRepository = userRepository;
         _unitOfWork = unitOfWork;
         _activityLogService = activityLogService;
         _currentUserService = currentUserService;
@@ -28,6 +31,16 @@ public class CreateCardCommandHandler : IRequestHandler<CreateCardCommand, CardD
 
     public async Task<CardDto> Handle(CreateCardCommand request, CancellationToken cancellationToken)
     {
+        // Validate assignee exists if provided
+        if (request.AssigneeId.HasValue)
+        {
+            var assignee = await _userRepository.GetByIdAsync(request.AssigneeId.Value);
+            if (assignee == null)
+            {
+                throw new ArgumentException($"User with ID {request.AssigneeId} not found.", nameof(request.AssigneeId));
+            }
+        }
+
         var card = new Card
         {
             Id = Guid.NewGuid(),

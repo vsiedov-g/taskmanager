@@ -11,11 +11,9 @@ This is the backend API for the Task Manager application with Slack integration,
 - **C# 12** - Programming language with nullable reference types enabled
 
 ### Database & ORM
-- **PostgreSQL** - Primary database for production
-- **SQLite** - Development and testing database
+- **PostgreSQL** - Primary database for all environments
 - **Entity Framework Core 9.0.8** - ORM and database migrations
-- **Microsoft.EntityFrameworkCore.Sqlite** - SQLite provider for development
-- **Npgsql.EntityFrameworkCore.PostgreSQL** - PostgreSQL provider for production
+- **Npgsql.EntityFrameworkCore.PostgreSQL** - PostgreSQL provider
 - **In-Memory Database** - Available for testing scenarios
 
 ### Architecture & Patterns
@@ -158,7 +156,7 @@ This is the backend API for the Task Manager application with Slack integration,
 - Cross-client synchronization
 
 ### 5. **Data Management**
-- Multi-database support (SQLite for dev, PostgreSQL for prod)
+- PostgreSQL database with Entity Framework Core
 - Entity Framework Core with migrations
 - Repository pattern with Unit of Work
 - Audit trail and change tracking
@@ -656,7 +654,7 @@ app.Run();
 ## Configuration Management
 
 ### Connection Strings
-- **SQLite**: Development and testing database
+- **PostgreSQL**: Primary database for all environments
 - **PostgreSQL**: Production database connection
 - **RabbitMQ**: Message broker connection (planned)
 
@@ -667,7 +665,7 @@ app.Run();
 
 ### Environment Variables
 ```
-DATABASE_URL=Data Source=taskmanager.db (SQLite for development)
+DATABASE_CONNECTION_STRING=Host=localhost;Database=taskmanager;Username=admin;Password=your_password
 JWT_KEY=your-super-secret-jwt-key-min-32-characters-long
 JWT_ISSUER=TaskManagerAPI
 JWT_AUDIENCE=TaskManagerClient
@@ -679,7 +677,7 @@ CORS_ORIGINS=http://localhost:4200,http://localhost:4201
 ### Development Server
 - **Kestrel**: HTTP server on port 5109 (configurable)
 - **Swagger**: API documentation available at /swagger
-- **Database**: SQLite file created automatically
+- **Database**: PostgreSQL database connection
 - **CORS**: Configured for local frontend development
 
 ### Health Checks (Planned)
@@ -697,7 +695,7 @@ CORS_ORIGINS=http://localhost:4200,http://localhost:4201
 - Container orchestration support
 
 ### Environment-Specific Settings
-- Development: SQLite, detailed logging, Swagger enabled
+- Development: PostgreSQL, detailed logging, Swagger enabled
 - Staging: PostgreSQL, structured logging, limited debugging
 - Production: PostgreSQL, minimal logging, security hardening
 

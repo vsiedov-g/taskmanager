@@ -112,10 +112,10 @@ export class ActivityLogEffects {
   loadRecentActivityLogs$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ActivityLogActions.loadRecentActivityLogs),
-      switchMap(({ count = 20 }) =>
-        this.activityLogService.getRecentActivityLogs(count).pipe(
+      switchMap(({ page = 1, pageSize = 20 }) =>
+        this.activityLogService.getRecentActivityLogs(page, pageSize).pipe(
           map(activityLogs =>
-            ActivityLogActions.loadRecentActivityLogsSuccess({ activityLogs })
+            ActivityLogActions.loadRecentActivityLogsSuccess({ activityLogs, isLoadMore: page > 1 })
           ),
           catchError(error =>
             of(ActivityLogActions.loadRecentActivityLogsFailure({ 
@@ -124,6 +124,29 @@ export class ActivityLogEffects {
           )
         )
       )
+    )
+  );
+
+  loadMoreRecentActivityLogs$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ActivityLogActions.loadMoreRecentActivityLogs),
+      withLatestFrom(
+        this.store.select(selectActivityLogCurrentPage),
+        this.store.select(selectActivityLogPageSize)
+      ),
+      switchMap(([_, currentPage, pageSize]) => {
+        const nextPage = currentPage + 1;
+        return this.activityLogService.getRecentActivityLogs(nextPage, pageSize).pipe(
+          map(activityLogs =>
+            ActivityLogActions.loadMoreRecentActivityLogsSuccess({ activityLogs })
+          ),
+          catchError(error =>
+            of(ActivityLogActions.loadMoreRecentActivityLogsFailure({ 
+              error: error.message || 'Failed to load more recent activity logs' 
+            }))
+          )
+        );
+      })
     )
   );
 

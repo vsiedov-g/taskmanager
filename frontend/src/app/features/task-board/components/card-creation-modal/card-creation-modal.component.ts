@@ -6,6 +6,7 @@ import { Store } from '@ngrx/store';
 import { TaskPriority, TaskStatus } from '../../models/task.model';
 import { List } from '../../models/list.model';
 import { TaskService } from '../../services/task.service';
+import { UserService, User } from '../../services/user.service';
 import { 
   TaskActions,
   selectSortedLists,
@@ -25,6 +26,7 @@ export class CardCreationModalComponent implements OnInit {
   private store = inject(Store);
   private fb = inject(FormBuilder);
   private taskService = inject(TaskService);
+  private userService = inject(UserService);
 
   // Form
   cardForm: FormGroup;
@@ -34,6 +36,7 @@ export class CardCreationModalComponent implements OnInit {
   isCreating$ = this.store.select(selectIsCreatingTask);
   error$ = this.store.select(selectTasksError);
   selectedListId$ = this.store.select(selectCreateCardModalListId);
+  users$ = this.userService.users$;
   
   // Data
   priorities = [
@@ -58,6 +61,9 @@ export class CardCreationModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Load users
+    this.userService.loadUsers().subscribe();
+    
     // Subscribe to the selected list ID from store
     this.selectedListId$.subscribe(listId => {
       if (listId) {
@@ -133,6 +139,7 @@ export class CardCreationModalComponent implements OnInit {
       description: 'Description',
       dueDate: 'Due date',
       priority: 'Priority',
+      assigneeId: 'Assignee',
       listId: 'List'
     };
     return displayNames[fieldName] || fieldName;
@@ -151,5 +158,9 @@ export class CardCreationModalComponent implements OnInit {
       default:
         return 'bg-gray-100 text-gray-700';
     }
+  }
+
+  getUserDisplayName(user: User): string {
+    return this.userService.getUserDisplayName(user);
   }
 }

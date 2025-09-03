@@ -1,9 +1,39 @@
 :host {
   display: block;
   height: 100vh;
+  overflow: hidden; // Prevent page-level scrolling
 }
 
-// Custom scrollbar styles for task cards container
+// Horizontal scrollbar styles for board container
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+  
+  &::-webkit-scrollbar {
+    height: 12px;
+    width: 12px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+  
+  &::-webkit-scrollbar-corner {
+    background: #f1f1f1;
+  }
+}
+
+// Custom scrollbar styles for task cards container (vertical)
 :host ::ng-deep .flex-1.overflow-y-auto {
   &::-webkit-scrollbar {
     width: 6px;
@@ -104,9 +134,25 @@
   }
 }
 
+// Horizontal scrolling behavior
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch; // iOS smooth scrolling
+}
+
 @media (max-width: 768px) {
   :host {
     height: auto;
     min-height: 100vh;
+    overflow: hidden;
+  }
+  
+  // On mobile, ensure horizontal scrolling works well
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; // Hide scrollbar on mobile
+    
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 }

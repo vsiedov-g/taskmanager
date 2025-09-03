@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, inject, OnInit } from '@angular/core';
+import { Component, Output, EventEmitter, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
@@ -22,9 +22,13 @@ import { AuthService } from '../../../../core/services/auth.service';
 })
 export class HistorySidebarComponent implements OnInit {
   @Output() closeSidebar = new EventEmitter<void>();
+  @ViewChild('scrollContainer', { static: false }) scrollContainer!: ElementRef<HTMLDivElement>;
 
   private store = inject(Store);
   private authService = inject(AuthService);
+
+  // Scroll state
+  isScrolledNearEnd = false;
 
   // Store selectors
   activityLogs$: Observable<ActivityLog[]> = this.store.select(selectActivityLogsSorted);
@@ -35,7 +39,7 @@ export class HistorySidebarComponent implements OnInit {
 
   ngOnInit(): void {
     // Load initial activity logs when component initializes
-    this.store.dispatch(ActivityLogActions.loadRecentActivityLogs({ count: 20 }));
+    this.store.dispatch(ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 }));
   }
 
   onClose(): void {
@@ -44,7 +48,16 @@ export class HistorySidebarComponent implements OnInit {
 
   onShowMore(): void {
     // Load more activity logs from the API
-    this.store.dispatch(ActivityLogActions.loadMoreActivityLogs());
+    this.store.dispatch(ActivityLogActions.loadMoreRecentActivityLogs());
+  }
+
+  onScroll(event: Event): void {
+    const element = event.target as HTMLDivElement;
+    const threshold = 100; // pixels from bottom
+    const position = element.scrollTop + element.offsetHeight;
+    const height = element.scrollHeight;
+    
+    this.isScrolledNearEnd = position >= height - threshold;
   }
 
   formatTimestamp(timestampStr: string): string {

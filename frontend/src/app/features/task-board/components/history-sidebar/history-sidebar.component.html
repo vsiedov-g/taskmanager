@@ -14,7 +14,7 @@
   </div>
 
   <!-- Content Area -->
-  <div class="flex-1 overflow-y-auto p-4 bg-gray-100">
+  <div #scrollContainer class="flex-1 overflow-y-auto p-4 bg-gray-100" (scroll)="onScroll($event)">
     <!-- Loading State -->
     @if (loading$ | async) {
       <div class="flex justify-center items-center py-8">
@@ -41,8 +41,8 @@
         </div>
       } @else {
         <div class="space-y-4">
-          @for (activityLog of activityLogs; track activityLog.id) {
-            <div class="flex items-start space-x-3">
+          @for (activityLog of activityLogs; track activityLog.id; let isLast = $last) {
+            <div class="flex items-start space-x-3" [attr.data-is-last]="isLast">
               <!-- Bullet Point -->
               <div class="w-1.5 h-1.5 bg-gray-500 rounded-full mt-2 flex-shrink-0"></div>
               
@@ -60,32 +60,33 @@
               </div>
             </div>
           }
+          
+          <!-- Show more button inline when scrolled near end -->
+          @if ((hasNextPage$ | async) && isScrolledNearEnd) {
+            <div class="pt-4 border-t border-gray-200 mt-4">
+              <button
+                type="button"
+                (click)="onShowMore()"
+                [disabled]="loadingMore$ | async"
+                class="w-full px-4 py-2 text-sm font-medium text-white bg-slate-600 border border-transparent rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                
+                @if (loadingMore$ | async) {
+                  <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Loading...</span>
+                } @else {
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Show more</span>
+                }
+              </button>
+            </div>
+          }
         </div>
       }
     }
   </div>
 
-  <!-- Footer -->
-  @if (hasNextPage$ | async) {
-    <div class="p-4 bg-gray-100">
-      <button
-        type="button"
-        (click)="onShowMore()"
-        [disabled]="loadingMore$ | async"
-        class="w-full px-4 py-2 text-sm font-medium text-white bg-slate-600 border border-transparent rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
-        
-        @if (loadingMore$ | async) {
-          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
-          <span>Loading...</span>
-        } @else {
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          <span>Show more</span>
-        }
-      </button>
-    </div>
-  }
 </div>
 
 <!-- Backdrop -->

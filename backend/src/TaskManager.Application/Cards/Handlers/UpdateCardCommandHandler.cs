@@ -10,17 +10,20 @@ namespace TaskManager.Application.Cards.Handlers;
 public class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, CardDto?>
 {
     private readonly ICardRepository _cardRepository;
+    private readonly IUserRepository _userRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly IActivityLogService _activityLogService;
     private readonly ICurrentUserService _currentUserService;
 
     public UpdateCardCommandHandler(
         ICardRepository cardRepository,
+        IUserRepository userRepository,
         IUnitOfWork unitOfWork,
         IActivityLogService activityLogService,
         ICurrentUserService currentUserService)
     {
         _cardRepository = cardRepository;
+        _userRepository = userRepository;
         _unitOfWork = unitOfWork;
         _activityLogService = activityLogService;
         _currentUserService = currentUserService;
@@ -30,6 +33,16 @@ public class UpdateCardCommandHandler : IRequestHandler<UpdateCardCommand, CardD
     {
         var card = await _cardRepository.GetByIdWithDetailsAsync(request.Id);
         if (card == null) return null;
+
+        // Validate assignee exists if provided
+        if (request.AssigneeId.HasValue)
+        {
+            var assignee = await _userRepository.GetByIdAsync(request.AssigneeId.Value);
+            if (assignee == null)
+            {
+                throw new ArgumentException($"User with ID {request.AssigneeId} not found.", nameof(request.AssigneeId));
+            }
+        }
 
         // Store the original card state for activity logging
         var originalCard = new Card

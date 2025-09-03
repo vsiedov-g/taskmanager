@@ -2,6 +2,7 @@ import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
+import { Router } from '@angular/router';
 import { Subject, Observable } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -9,6 +10,7 @@ import { Task, TaskPriority, TaskStatus } from '../../models/task.model';
 import { List } from '../../models/list.model';
 import { ActivityLog } from '../../models/activity-log.model';
 import { TaskService } from '../../services/task.service';
+import { UserService, User } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { 
   TaskActions,
@@ -35,7 +37,9 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
   private store = inject(Store);
   private fb = inject(FormBuilder);
   private taskService = inject(TaskService);
+  private userService = inject(UserService);
   private authService = inject(AuthService);
+  private router = inject(Router);
   private destroy$ = new Subject<void>();
 
   // Form
@@ -49,6 +53,7 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
   cardActivityLogs$ = this.store.select(selectCurrentCardActivityLogs);
   isLoadingMoreLogs$ = this.store.select(selectActivityLogLoadingMore);
   hasMoreLogs$ = this.store.select(selectActivityLogHasNextPage);
+  users$ = this.userService.users$;
   
   // Data
   priorities = [
@@ -79,6 +84,9 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Load users
+    this.userService.loadUsers().subscribe();
+    
     // Subscribe to the editing task to populate the form
     this.editingTask$
       .pipe(takeUntil(this.destroy$))
@@ -166,6 +174,8 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
 
   closeModal(): void {
     this.store.dispatch(TaskActions.closeEditCardModal());
+    // Navigate back to task-board to clean the URL
+    this.router.navigate(['/task-board']);
   }
 
   private markFormGroupTouched(): void {
@@ -313,5 +323,9 @@ export class CardEditModalComponent implements OnInit, OnDestroy {
     if (this.currentTask) {
       this.store.dispatch(ActivityLogActions.loadMoreActivityLogsByCard({ cardId: this.currentTask.id }));
     }
+  }
+
+  getUserDisplayName(user: User): string {
+    return this.userService.getUserDisplayName(user);
   }
 }

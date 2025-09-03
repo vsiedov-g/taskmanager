@@ -36,7 +36,7 @@ export class ListEffects {
         this.listService.createList(listData).pipe(
           mergeMap((list) => [
             ListActions.createListSuccess({ list }),
-            ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(ListActions.createListFailure({ error: error.message })))
         )
@@ -53,7 +53,7 @@ export class ListEffects {
           mergeMap((updatedList) => [
             ListActions.updateListSuccess({ list: updatedList }),
             ListActions.cancelEditingList(), // Exit edit mode
-            ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(ListActions.updateListFailure({ error: error.message })))
         )
@@ -73,7 +73,7 @@ export class ListEffects {
             // Then delete the list
             ListActions.deleteListSuccess({ id }),
             // Refresh activity logs
-            ActivityLogActions.loadRecentActivityLogs({ count: 20 })
+            ActivityLogActions.loadRecentActivityLogs({ page: 1, pageSize: 20 })
           ]),
           catchError((error) => of(ListActions.deleteListFailure({ error: error.message })))
         )

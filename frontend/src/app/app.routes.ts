@@ -19,6 +19,12 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
+    path: 'task/:id',
+    loadChildren: () => import('./features/task-board/task-board.routes')
+      .then(m => m.taskBoardRoutes),
+    canActivate: [authGuard]
+  },
+  {
     path: '**',
     redirectTo: '/auth/sign-in'
   }
