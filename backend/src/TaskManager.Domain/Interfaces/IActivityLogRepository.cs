@@ -9,6 +9,7 @@ public interface IActivityLogRepository
     Task<IEnumerable<ActivityLog>> GetByUserIdAsync(Guid userId);
     Task<IEnumerable<ActivityLog>> GetRecentAsync(int count = 20);
     Task<IEnumerable<ActivityLog>> GetPagedAsync(int page, int pageSize);
+    Task<IEnumerable<ActivityLog>> GetByBoardIdAsync(Guid boardId, int page = 1, int pageSize = 50);
     Task<ActivityLog?> GetByIdAsync(Guid id);
     void Update(ActivityLog activityLog);
     void Delete(ActivityLog activityLog);

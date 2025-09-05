@@ -28,7 +28,19 @@
       "Bash(dotnet add:*)",
       "Read(D:\\projects\\taskmanager/**)",
       "Bash(git checkout:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet test:*)",
+      "Bash(find:*)",
+      "Read(/D:\\projects\\taskmanager\\backend\\src\\TaskManager.Infrastructure\\Services/**)",
+      "Read(/D:\\projects\\taskmanager\\backend\\src\\TaskManager.Application\\Common\\Models/**)",
+      "Read(/D:\\projects\\taskmanager\\backend\\src\\TaskManager.Infrastructure\\Services/**)",
+      "Read(/D:\\projects\\taskmanager\\backend\\src\\TaskManager.Domain\\Interfaces/**)",
+      "Read(/D:\\projects\\taskmanager\\backend\\src\\TaskManager.Application\\Common\\Interfaces/**)",
+      "Read(/D:\\projects\\taskmanager\\backend\\src\\TaskManager.Infrastructure\\Services/**)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git stash push:*)"
     ],
     "deny": [],
     "ask": []

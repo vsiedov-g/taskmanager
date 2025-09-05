@@ -1,8 +1,9 @@
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using TaskManager.Application.ActivityLogs.Commands;
+using TaskManager.Application.ActivityLogs.Queries;
 using TaskManager.Domain.Entities;
-using TaskManager.Infrastructure.Data;
 
 namespace TaskManager.API.Controllers;
 
@@ -11,11 +12,11 @@ namespace TaskManager.API.Controllers;
 [Authorize]
 public class ActivityLogsController : ControllerBase
 {
-    private readonly TaskManagerContext _context;
+    private readonly IMediator _mediator;
 
-    public ActivityLogsController(TaskManagerContext context)
+    public ActivityLogsController(IMediator mediator)
     {
-        _context = context;
+        _mediator = mediator;
     }
 
     [HttpGet]
@@ -24,124 +25,119 @@ public class ActivityLogsController : ControllerBase
         [FromQuery] int page = 1, 
         [FromQuery] int pageSize = 50)
     {
-        var skip = (page - 1) * pageSize;
-        
-        var query = _context.ActivityLogs
-            .Include(a => a.User)
-            .Include(a => a.Card)
-                .ThenInclude(c => c!.List)
-            .AsQueryable();
-
-        // Filter by boardId if provided
-        if (boardId.HasValue)
+        var query = new GetActivityLogsQuery
         {
-            query = query.Where(a => a.Card != null && a.Card.List.BoardId == boardId.Value);
-        }
-        
-        return await query
-            .OrderByDescending(a => a.CreatedAt)
-            .Skip(skip)
-            .Take(pageSize)
-            .ToListAsync();
+            BoardId = boardId,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        var activityLogs = await _mediator.Send(query);
+        return Ok(activityLogs);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<ActivityLog>> GetActivityLog(Guid id)
     {
-        var activityLog = await _context.ActivityLogs
-            .Include(a => a.User)
-            .Include(a => a.Card)
-            .FirstOrDefaultAsync(a => a.Id == id);
+        var query = new GetActivityLogByIdQuery(id);
+        var activityLog = await _mediator.Send(query);
 
         if (activityLog == null)
         {
             return NotFound();
         }
 
-        return activityLog;
+        return Ok(activityLog);
     }
 
     [HttpGet("by-card/{cardId}")]
     public async Task<ActionResult<IEnumerable<ActivityLog>>> GetActivityLogsByCard(Guid cardId)
     {
-        return await _context.ActivityLogs
-            .Include(a => a.User)
-            .Where(a => a.CardId == cardId)
-            .OrderByDescending(a => a.CreatedAt)
-            .ToListAsync();
+        var query = new GetActivityLogsByCardQuery(cardId);
+        var activityLogs = await _mediator.Send(query);
+        return Ok(activityLogs);
     }
 
     [HttpGet("by-user/{userId}")]
     public async Task<ActionResult<IEnumerable<ActivityLog>>> GetActivityLogsByUser(Guid userId)
     {
-        return await _context.ActivityLogs
-            .Include(a => a.User)
-            .Include(a => a.Card)
-            .Where(a => a.UserId == userId)
-            .OrderByDescending(a => a.CreatedAt)
-            .ToListAsync();
+        var query = new GetActivityLogsByUserQuery(userId);
+        var activityLogs = await _mediator.Send(query);
+        return Ok(activityLogs);
     }
 
     [HttpPost]
-    public async Task<ActionResult<ActivityLog>> CreateActivityLog(ActivityLog activityLog)
+    public async Task<ActionResult<ActivityLog>> CreateActivityLog([FromBody] CreateActivityLogRequest request)
     {
-        activityLog.Id = Guid.NewGuid();
-        activityLog.CreatedAt = DateTime.UtcNow;
-        
-        _context.ActivityLogs.Add(activityLog);
-        await _context.SaveChangesAsync();
+        var command = new CreateActivityLogCommand
+        {
+            Action = request.Action,
+            EntityType = request.EntityType,
+            EntityId = request.EntityId,
+            Description = request.Description,
+            UserId = request.UserId,
+            CardId = request.CardId
+        };
 
+        var activityLog = await _mediator.Send(command);
         return CreatedAtAction(nameof(GetActivityLog), new { id = activityLog.Id }, activityLog);
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<ActivityLog>> UpdateActivityLog(Guid id, ActivityLog activityLog)
+    public async Task<ActionResult<ActivityLog>> UpdateActivityLog(Guid id, [FromBody] UpdateActivityLogRequest request)
     {
-        if (id != activityLog.Id)
+        var command = new UpdateActivityLogCommand
         {
-            return BadRequest();
-        }
+            Id = id,
+            Action = request.Action,
+            EntityType = request.EntityType,
+            EntityId = request.EntityId,
+            Description = request.Description,
+            UserId = request.UserId,
+            CardId = request.CardId
+        };
 
-        _context.Entry(activityLog).State = EntityState.Modified;
+        var activityLog = await _mediator.Send(command);
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!ActivityLogExists(id))
-            {
-                return NotFound();
-            }
-            throw;
-        }
-
-        var updatedActivityLog = await _context.ActivityLogs
-            .Include(a => a.User)
-            .Include(a => a.Card)
-            .FirstOrDefaultAsync(a => a.Id == id);
-
-        return Ok(updatedActivityLog);
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteActivityLog(Guid id)
-    {
-        var activityLog = await _context.ActivityLogs.FindAsync(id);
         if (activityLog == null)
         {
             return NotFound();
         }
 
-        _context.ActivityLogs.Remove(activityLog);
-        await _context.SaveChangesAsync();
+        return Ok(activityLog);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteActivityLog(Guid id)
+    {
+        var command = new DeleteActivityLogCommand(id);
+        var result = await _mediator.Send(command);
+
+        if (!result)
+        {
+            return NotFound();
+        }
 
         return NoContent();
     }
+}
 
-    private bool ActivityLogExists(Guid id)
-    {
-        return _context.ActivityLogs.Any(e => e.Id == id);
-    }
+public class CreateActivityLogRequest
+{
+    public string Action { get; set; } = string.Empty;
+    public string EntityType { get; set; } = string.Empty;
+    public Guid EntityId { get; set; }
+    public string? Description { get; set; }
+    public Guid UserId { get; set; }
+    public Guid? CardId { get; set; }
+}
+
+public class UpdateActivityLogRequest
+{
+    public string Action { get; set; } = string.Empty;
+    public string EntityType { get; set; } = string.Empty;
+    public Guid EntityId { get; set; }
+    public string? Description { get; set; }
+    public Guid UserId { get; set; }
+    public Guid? CardId { get; set; }
 }

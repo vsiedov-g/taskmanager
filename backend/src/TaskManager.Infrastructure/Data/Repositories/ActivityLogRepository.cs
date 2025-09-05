@@ -62,6 +62,21 @@ public class ActivityLogRepository : IActivityLogRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<ActivityLog>> GetByBoardIdAsync(Guid boardId, int page = 1, int pageSize = 50)
+    {
+        var skip = (page - 1) * pageSize;
+        
+        return await _context.ActivityLogs
+            .Include(a => a.User)
+            .Include(a => a.Card)
+                .ThenInclude(c => c!.List)
+            .Where(a => a.Card != null && a.Card.List.BoardId == boardId)
+            .OrderByDescending(a => a.CreatedAt)
+            .Skip(skip)
+            .Take(pageSize)
+            .ToListAsync();
+    }
+
     public async Task<ActivityLog?> GetByIdAsync(Guid id)
     {
         return await _context.ActivityLogs
