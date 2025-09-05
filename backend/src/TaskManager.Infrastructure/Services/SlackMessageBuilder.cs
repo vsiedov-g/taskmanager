@@ -89,8 +89,8 @@ public class SlackMessageBuilder : ISlackMessageBuilder
 
     private string BuildCreateMessage(Card? card, string userName, ActivityLog activityLog)
     {
-        var text = $"🆕 *New task created*\n" +
-                   $"*Task:* {card?.Title ?? "Unknown Task"}\n" +
+        var taskName = card?.Title ?? "Unknown Task";
+        var text = $"🆕 *\"{taskName}\" is created*\n" +
                    $"*Created by:* {userName} on {activityLog.CreatedAt:MMM dd, yyyy 'at' h:mm tt}\n";
 
         if (card != null)
@@ -213,8 +213,8 @@ public class SlackMessageBuilder : ISlackMessageBuilder
     private string BuildCreateMessage(SlackNotificationData data)
     {
         var activityLog = data.ActivityLog;
-        var text = $"🆕 *New task created*\n" +
-                   $"*Task:* {data.CardTitle ?? "Unknown Task"}\n" +
+        var taskName = data.CardTitle ?? "Unknown Task";
+        var text = $"🆕 *\"{taskName}\" is created*\n" +
                    $"*Created by:* {data.UserName} on {activityLog.CreatedAt:MMM dd, yyyy 'at' h:mm tt}\n";
 
         if (data.CardPriority != null)
@@ -450,20 +450,20 @@ public class SlackMessageBuilder : ISlackMessageBuilder
             });
         }
 
-        // Assignee
-        var assigneeName = "Unassigned";
+        // Assignee - only show if assigned
         if (card?.AssigneeId != null)
         {
             var assignee = await _userRepository.GetByIdAsync(card.AssigneeId.Value);
-            assigneeName = $"{assignee?.Name ?? ""}".Trim();
-            if (string.IsNullOrEmpty(assigneeName)) assigneeName = "Unknown User";
+            var assigneeName = $"{assignee?.Name ?? ""}".Trim();
+            if (!string.IsNullOrEmpty(assigneeName))
+            {
+                fields.Add(new
+                {
+                    type = "mrkdwn",
+                    text = $"*👤 Assignee:*\n{assigneeName}"
+                });
+            }
         }
-        
-        fields.Add(new
-        {
-            type = "mrkdwn",
-            text = $"*👤 Assignee:*\n{assigneeName}"
-        });
 
         // Priority
         if (card != null)
@@ -533,13 +533,15 @@ public class SlackMessageBuilder : ISlackMessageBuilder
             });
         }
 
-        // Assignee
-        var assigneeName = data.AssigneeName ?? "Unassigned";
-        fields.Add(new
+        // Assignee - only show if assigned
+        if (!string.IsNullOrEmpty(data.AssigneeName))
         {
-            type = "mrkdwn",
-            text = $"*👤 Assignee:*\n{assigneeName}"
-        });
+            fields.Add(new
+            {
+                type = "mrkdwn",
+                text = $"*👤 Assignee:*\n{data.AssigneeName}"
+            });
+        }
 
         // Priority
         if (data.CardPriority != null)
@@ -599,36 +601,66 @@ public class SlackMessageBuilder : ISlackMessageBuilder
     private string ParseListTransition(string description)
     {
         // Try to parse list transition from activity log description
-        // Expected format might be "Moved from 'List A' to 'List B'" or similar
-        // This is a simple implementation - adjust based on your actual description format
+        // Expected formats: "Moved from 'List A' to 'List B'" or "Card moved from X to Y"
         
-        if (description.Contains("moved") || description.Contains("Moved"))
+        if (string.IsNullOrEmpty(description) || 
+            (!description.Contains("moved", StringComparison.OrdinalIgnoreCase) && 
+             !description.Contains("from", StringComparison.OrdinalIgnoreCase)))
+        {
+            return string.Empty;
+        }
+
+        try
         {
             // Look for patterns like "from X to Y"
             var fromIndex = description.IndexOf("from", StringComparison.OrdinalIgnoreCase);
             var toIndex = description.IndexOf("to", StringComparison.OrdinalIgnoreCase);
             
-            if (fromIndex != -1 && toIndex != -1 && toIndex > fromIndex)
+            if (fromIndex == -1 || toIndex == -1 || toIndex <= fromIndex + 4)
             {
-                try
-                {
-                    var fromPart = description.Substring(fromIndex + 4, toIndex - fromIndex - 4).Trim();
-                    var toPart = description.Substring(toIndex + 2).Trim();
-                    
-                    // Clean up the parts (remove quotes, extra whitespace)
-                    fromPart = fromPart.Trim('\'', '"', ' ');
-                    toPart = toPart.Trim('\'', '"', ' ');
-                    
-                    return $"{fromPart} >>> {toPart}";
-                }
-                catch
-                {
-                    // If parsing fails, return empty string to fall back to regular list display
-                    return string.Empty;
-                }
+                return string.Empty;
             }
+
+            var fromPart = description.Substring(fromIndex + 4, toIndex - fromIndex - 4).Trim();
+            var toPart = description.Substring(toIndex + 2).Trim();
+            
+            // Clean up the parts (remove quotes, extra whitespace, and common suffixes)
+            fromPart = CleanListName(fromPart);
+            toPart = CleanListName(toPart);
+            
+            // Only return if both parts are meaningful
+            if (!string.IsNullOrEmpty(fromPart) && !string.IsNullOrEmpty(toPart) && 
+                fromPart.Length < 50 && toPart.Length < 50)
+            {
+                return $"{fromPart} → {toPart}";
+            }
+        }
+        catch
+        {
+            // If parsing fails, return empty string to fall back to regular list display
         }
         
         return string.Empty;
+    }
+
+    private string CleanListName(string listName)
+    {
+        if (string.IsNullOrEmpty(listName))
+            return string.Empty;
+            
+        // Remove quotes and extra whitespace
+        listName = listName.Trim('\'', '"', ' ', '\t', '\n', '\r');
+        
+        // Remove common suffixes that might appear in descriptions
+        var suffixes = new[] { " list", " column", " status" };
+        foreach (var suffix in suffixes)
+        {
+            if (listName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+            {
+                listName = listName.Substring(0, listName.Length - suffix.Length).Trim();
+            }
+        }
+        
+        return listName;
     }
 }

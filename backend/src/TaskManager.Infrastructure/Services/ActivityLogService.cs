@@ -63,12 +63,9 @@ public class ActivityLogService : IActivityLogService
             changes.Add($"status from {oldCard.Status} to {newCard.Status}");
         }
 
-        if (oldCard.AssigneeId != newCard.AssigneeId)
+        if (oldCard.Priority != newCard.Priority)
         {
-            var assigneeChange = newCard.AssigneeId.HasValue 
-                ? $"assigned to user {newCard.AssigneeId}" 
-                : "unassigned";
-            changes.Add(assigneeChange);
+            changes.Add($"Priority: {oldCard.Priority} → {newCard.Priority}");
         }
 
         if (changes.Any())
@@ -137,21 +134,25 @@ public class ActivityLogService : IActivityLogService
         
         if (newAssignee != null && oldAssignee != null)
         {
-            description = $"reassigned card \"{card.Title}\" from {oldAssignee.Name}";
+            description = $"Assignee: {oldAssignee.Name} → {newAssignee.Name}";
         }
         else if (newAssignee != null)
         {
-            description = $"assigned card \"{card.Title}\" to {newAssignee.Name}";
+            description = $"Assignee: Unassigned → {newAssignee.Name}";
+        }
+        else if (oldAssignee != null)
+        {
+            description = $"Assignee: {oldAssignee.Name} → Unassigned";
         }
         else
         {
-            description = $"unassigned card \"{card.Title}\"";
+            description = "Assignment updated";
         }
 
         var activityLog = new ActivityLog
         {
             Id = Guid.NewGuid(),
-            Action = "ASSIGN",
+            Action = "UPDATE",
             EntityType = "Card",
             EntityId = card.Id,
             Description = description,
@@ -164,15 +165,15 @@ public class ActivityLogService : IActivityLogService
         SendSlackNotificationAsync(activityLog);
     }
 
-    public async Task LogCardPriorityChangedAsync(Card card, CardStatus oldPriority, CardStatus newPriority, Guid userId)
+    public async Task LogCardPriorityChangedAsync(Card card, CardPriority oldPriority, CardPriority newPriority, Guid userId)
     {
         var activityLog = new ActivityLog
         {
             Id = Guid.NewGuid(),
-            Action = "PRIORITY_CHANGE",
-            EntityType = "Card",
+            Action = "UPDATE",
+            EntityType = "Card", 
             EntityId = card.Id,
-            Description = $"changed priority of card \"{card.Title}\" from {oldPriority} to {newPriority}",
+            Description = $"Priority: {oldPriority} → {newPriority}",
             CreatedAt = DateTime.UtcNow,
             UserId = userId,
             CardId = card.Id
@@ -298,6 +299,28 @@ public class ActivityLogService : IActivityLogService
                 var card = activityLog.CardId.HasValue ? 
                     await cardRepository.GetByIdAsync(activityLog.CardId.Value) : null;
 
+                // Get assignee information if card has one
+                User? assignee = null;
+                if (card?.AssigneeId.HasValue == true)
+                {
+                    assignee = await userRepository.GetByIdAsync(card.AssigneeId.Value);
+                }
+
+                // Get list information if card has one  
+                var listRepository = scope.ServiceProvider.GetRequiredService<IListRepository>();
+                List? list = null;
+                if (card?.ListId != null)
+                {
+                    list = await listRepository.GetByIdAsync(card.ListId);
+                }
+
+                // Skip sending Slack notification for DELETE actions
+                if (activityLog.Action.ToUpper() == "DELETE")
+                {
+                    _logger.LogDebug("Skipping Slack notification for DELETE action on activity {ActivityLogId}", activityLog.Id);
+                    return;
+                }
+
                 // Create a detached notification data object
                 var notificationData = new SlackNotificationData
                 {
@@ -317,7 +340,9 @@ public class ActivityLogService : IActivityLogService
                     CardDescription = card?.Description,
                     CardPriority = card?.Priority,
                     CardStatus = card?.Status,
-                    CardDueDate = card?.DueDate
+                    CardDueDate = card?.DueDate,
+                    AssigneeName = assignee != null ? $"{assignee.Name}".Trim() : null,
+                    ListTitle = list?.Name
                 };
 
                 var result = await slackNotifier.SendActivityNotificationAsync(notificationData);

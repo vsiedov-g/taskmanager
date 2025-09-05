@@ -10,7 +10,7 @@ public interface IActivityLogService
     Task LogCardMovedAsync(Card card, string fromListName, string toListName, Guid userId);
     Task LogCardDeletedAsync(Card card, Guid userId);
     Task LogCardAssignedAsync(Card card, User? oldAssignee, User? newAssignee, Guid userId);
-    Task LogCardPriorityChangedAsync(Card card, CardStatus oldPriority, CardStatus newPriority, Guid userId);
+    Task LogCardPriorityChangedAsync(Card card, CardPriority oldPriority, CardPriority newPriority, Guid userId);
     
     // List operations
     Task LogListCreatedAsync(List list, Guid userId);
