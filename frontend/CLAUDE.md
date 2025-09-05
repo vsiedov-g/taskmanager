@@ -1,569 +1,492 @@
-# Task Manager Frontend - Development Guide
+# Angular Project Structure Guide
 
-## Project Overview
-This is the frontend application for the Task Manager with Slack integration, built using Angular 20, Tailwind CSS, and modern frontend development practices. The application follows a feature-based architecture with clean separation of concerns.
+## Overview
+This Angular 20+ project follows a feature-based architecture using standalone components, NgRx for state management, and TailwindCSS for styling. The project is structured for scalability and maintainability with clean separation of concerns.
 
-## Tech Stack
+## Technology Stack
+- **Angular**: 20.0.0
+- **TypeScript**: 5.8.2
+- **NgRx**: 19.2.1 (Store, Effects, Router Store, DevTools)
+- **TailwindCSS**: 4.1.10
+- **Styling**: SCSS with TailwindCSS
+- **Charts**: ng2-charts, chart.js, @swimlane/ngx-charts
+- **Grid**: ag-grid-angular
+- **Testing**: Jasmine, Karma
+- **Storybook**: Component documentation
 
-### Framework & Platform
-- **Angular 20** - Latest Angular framework with standalone components support
-- **TypeScript 5.8** - Strongly typed JavaScript superset
-- **RxJS 7.8** - Reactive programming for Angular
-- **Zone.js 0.15** - Change detection and async operations
-
-### UI Framework & Styling
-- **Angular Material 20.2.0** - Material Design components
-- **Angular CDK 20.2.0** - Component Development Kit
-- **Angular Animations 20.2.1** - Animation and transition support
-- **Tailwind CSS 3.4.17** - Utility-first CSS framework
-- **@tailwindcss/forms** - Better form styling
-- **@tailwindcss/typography** - Typography utilities
-- **SCSS** - Enhanced CSS with variables and mixins
-
-### State Management & Data Flow
-- **NgRx Store 20.0.1** - Centralized state management
-- **NgRx Effects 20.0.1** - Side effects management
-- **NgRx Entity 20.0.1** - Entity state management
-- **NgRx Store DevTools 20.0.1** - Development debugging
-
-### Real-time Communication
-- **@microsoft/signalr 9.0.6** - Real-time web functionality
-- **WebSocket connections** - Live updates and notifications
-
-### Data Visualization
-- **Chart.js 4.5.0** - Flexible charting library
-- **ng2-charts 8.0.0** - Angular wrapper for Chart.js
-
-### Utility Libraries
-- **date-fns 4.1.0** - Modern date utility library
-- **lodash-es 4.17.21** - Utility functions with ES modules
-- **@types/lodash-es** - TypeScript definitions
-
-### Development Tools
-- **ESLint 9.34.0** - Code linting and quality
-- **@typescript-eslint** - TypeScript-specific linting rules
-- **Prettier 3.6.2** - Code formatting
-- **Husky 9.1.7** - Git hooks management
-- **lint-staged 16.1.5** - Run linters on staged files
-- **@commitlint** - Commit message linting
-
-### Testing Framework
-- **Jasmine 5.7.0** - Testing framework
-- **Karma 6.4.0** - Test runner
-- **Angular Testing Utilities** - Angular-specific testing tools
-
-### Build & Development
-- **Angular CLI 20.0.2** - Command line tools
-- **@angular/build 20.0.2** - Build system
-- **PostCSS 8.5.6** - CSS processing
-- **Autoprefixer 10.4.21** - CSS vendor prefixing
-
-## Architecture Overview
-
-### Feature-Based Architecture
-
-```
-┌─────────────────────────────────────────────────────┐
-│                     App Module                      │
-│              (Root, Routing, Guards)                │
-└─────────────────┬───────────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────────────┐
-│                 Core Module                         │
-│          (Singleton Services, Guards)               │
-└─────────────────┬───────────────────────────────────┘
-                  │
-┌─────────────────▼───────────────────────────────────┐
-│               Shared Module                         │
-│           (Reusable Components)                     │
-└─────────────────┬───────────────────────────────────┘
-                  │
-        ┌─────────┼─────────┐
-        │         │         │
-┌───────▼───┐ ┌───▼───┐ ┌───▼─────┐
-│  Tasks    │ │Project│ │ Slack   │
-│  Feature  │ │Feature│ │Feature  │
-│  Module   │ │Module │ │ Module  │
-└───────────┘ └───────┘ └─────────┘
-```
-
-### Module Structure
-
-#### 1. Core Module (Singleton)
-**Purpose**: Application-wide singleton services and configurations
-- **Services**: API services, authentication, configuration
-- **Guards**: Route guards, authentication guards
-- **Interceptors**: HTTP interceptors, error handling
-- **Models**: TypeScript interfaces and types
-
-#### 2. Shared Module (Reusable)
-**Purpose**: Commonly used components, pipes, and directives
-- **UI Components**: Buttons, modals, forms, loading spinners
-- **Layout Components**: Headers, sidebars, footers
-- **Pipes**: Date formatting, text transformation
-- **Directives**: Custom DOM manipulations
-- **Utils**: Helper functions and utilities
-
-#### 3. Feature Modules (Lazy Loaded)
-**Purpose**: Specific business functionality
-- **Tasks Module**: Task management functionality
-- **Projects Module**: Project organization features
-- **Slack Module**: Slack integration components
-- **Dashboard Module**: Analytics and overview
-
-## Project Structure
+## Root Project Structure
 
 ```
 frontend/
 ├── src/
-│   ├── app/
-│   │   ├── core/                          # Singleton services
-│   │   │   ├── services/
-│   │   │   │   ├── api.service.ts
-│   │   │   │   ├── auth.service.ts
-│   │   │   │   ├── slack.service.ts
-│   │   │   │   ├── signalr.service.ts
-│   │   │   │   └── notification.service.ts
-│   │   │   ├── guards/
-│   │   │   │   ├── auth.guard.ts
-│   │   │   │   └── role.guard.ts
-│   │   │   ├── interceptors/
-│   │   │   │   ├── auth.interceptor.ts
-│   │   │   │   ├── error.interceptor.ts
-│   │   │   │   └── loading.interceptor.ts
-│   │   │   ├── models/
-│   │   │   │   ├── task.model.ts
-│   │   │   │   ├── project.model.ts
-│   │   │   │   ├── user.model.ts
-│   │   │   │   └── slack.model.ts
-│   │   │   └── core.module.ts
-│   │   │
-│   │   ├── features/                      # Feature modules
-│   │   │   ├── tasks/
-│   │   │   │   ├── components/
-│   │   │   │   │   ├── task-list/
-│   │   │   │   │   │   ├── task-list.component.ts
-│   │   │   │   │   │   ├── task-list.component.html
-│   │   │   │   │   │   └── task-list.component.scss
-│   │   │   │   │   ├── task-form/
-│   │   │   │   │   └── task-card/
-│   │   │   │   ├── services/
-│   │   │   │   │   └── task.service.ts
-│   │   │   │   ├── store/
-│   │   │   │   │   ├── task.actions.ts
-│   │   │   │   │   ├── task.reducer.ts
-│   │   │   │   │   ├── task.effects.ts
-│   │   │   │   │   └── task.selectors.ts
-│   │   │   │   ├── pages/
-│   │   │   │   │   ├── tasks-page/
-│   │   │   │   │   └── task-detail-page/
-│   │   │   │   └── tasks.module.ts
-│   │   │   │
-│   │   │   ├── projects/
-│   │   │   │   ├── components/
-│   │   │   │   ├── services/
-│   │   │   │   ├── store/
-│   │   │   │   ├── pages/
-│   │   │   │   └── projects.module.ts
-│   │   │   │
-│   │   │   ├── slack-integration/
-│   │   │   │   ├── components/
-│   │   │   │   │   ├── slack-channels/
-│   │   │   │   │   ├── slack-notifications/
-│   │   │   │   │   └── slack-settings/
-│   │   │   │   ├── services/
-│   │   │   │   │   └── slack-integration.service.ts
-│   │   │   │   ├── store/
-│   │   │   │   ├── pages/
-│   │   │   │   └── slack.module.ts
-│   │   │   │
-│   │   │   └── dashboard/
-│   │   │       ├── components/
-│   │   │       │   ├── analytics-chart/
-│   │   │       │   ├── progress-summary/
-│   │   │       │   └── activity-feed/
-│   │   │       ├── services/
-│   │   │       ├── store/
-│   │   │       ├── pages/
-│   │   │       └── dashboard.module.ts
-│   │   │
-│   │   ├── shared/                        # Reusable components
-│   │   │   ├── components/
-│   │   │   │   ├── ui/
-│   │   │   │   │   ├── button/
-│   │   │   │   │   │   ├── button.component.ts
-│   │   │   │   │   │   ├── button.component.html
-│   │   │   │   │   │   └── button.component.scss
-│   │   │   │   │   ├── modal/
-│   │   │   │   │   ├── loading-spinner/
-│   │   │   │   │   ├── toast-notification/
-│   │   │   │   │   ├── confirmation-dialog/
-│   │   │   │   │   └── data-table/
-│   │   │   │   └── layout/
-│   │   │   │       ├── header/
-│   │   │   │       ├── sidebar/
-│   │   │   │       ├── footer/
-│   │   │   │       └── breadcrumb/
-│   │   │   ├── pipes/
-│   │   │   │   ├── date-format.pipe.ts
-│   │   │   │   ├── truncate.pipe.ts
-│   │   │   │   └── priority-color.pipe.ts
-│   │   │   ├── directives/
-│   │   │   │   ├── click-outside.directive.ts
-│   │   │   │   └── lazy-load.directive.ts
-│   │   │   ├── utils/
-│   │   │   │   ├── validation.utils.ts
-│   │   │   │   ├── date.utils.ts
-│   │   │   │   └── storage.utils.ts
-│   │   │   └── shared.module.ts
-│   │   │
-│   │   ├── app-routing.module.ts
-│   │   ├── app.component.ts
-│   │   ├── app.component.html
-│   │   ├── app.component.scss
-│   │   └── app.module.ts
-│   │
-│   ├── assets/                            # Static assets
-│   │   ├── images/
-│   │   ├── icons/
-│   │   └── fonts/
-│   │
-│   ├── environments/                      # Environment configs
-│   │   ├── environment.ts
-│   │   └── environment.prod.ts
-│   │
-│   ├── styles.scss                        # Global styles
-│   ├── index.html                         # Main HTML file
-│   └── main.ts                           # Bootstrap file
-│
-├── angular.json                          # Angular CLI config
-├── package.json                          # Dependencies
-├── tailwind.config.js                    # Tailwind config
-├── postcss.config.js                     # PostCSS config
-├── tsconfig.json                         # TypeScript config
-├── .eslintrc.json                       # ESLint config
-├── .prettierrc                          # Prettier config
-├── commitlint.config.js                 # Commit lint config
-└── karma.conf.js                        # Test config
+│   ├── app/                    # Main application code
+│   ├── assets/                 # Static assets
+│   ├── environments/           # Environment configurations
+│   ├── styles/                 # Global styles
+│   └── main.ts                 # Application bootstrap
+├── public/                     # Public static assets
+├── angular.json                # Angular CLI configuration
+├── package.json                # Dependencies and scripts
+├── tailwind.config.js          # TailwindCSS configuration
+├── tsconfig.json               # TypeScript configuration
+└── Dockerfile                  # Docker configuration
 ```
 
-## Key Features & Requirements
+## Application Structure (`src/app/`)
 
-### Core Task Management UI
-- Task creation, editing, and deletion forms
-- Task list with filtering, sorting, and pagination
-- Task cards with priority indicators and status badges
-- Drag-and-drop functionality for status updates
-- Bulk actions for multiple task operations
-- Advanced search and filtering capabilities
+### Main App Files
+- `app.component.ts` - Root component (standalone)
+- `app.config.ts` - Application configuration with providers
+- `app.routes.ts` - Top-level routing configuration
+- `main.ts` - Bootstrap application with standalone components
 
-### Project Management Interface
-- Project creation and configuration
-- Project dashboard with progress visualization
-- Team member assignment and management
-- Project templates and workflows
-- Milestone tracking and deadline management
+### Core Directory (`core/`)
+Contains application-wide services, guards, interceptors, and global state management.
 
-### Slack Integration UI
-- Slack workspace connection flow
-- Channel selection and configuration
-- Real-time notification settings
-- Slack user mapping interface
-- Interactive Slack command responses
-- Webhook status monitoring
-
-### Dashboard & Analytics
-- Interactive charts and graphs using Chart.js
-- Task completion metrics and trends
-- Team productivity analytics
-- Project progress visualization
-- Real-time activity feed
-- Customizable dashboard widgets
-
-### Real-time Features
-- SignalR integration for live updates
-- Real-time task status changes
-- Live notification system
-- Online user presence indicators
-- Instant messaging and comments
-
-### Responsive Design
-- Mobile-first approach with Tailwind CSS
-- Adaptive layouts for tablet and desktop
-- Touch-friendly interface elements
-- Progressive Web App (PWA) capabilities
-- Offline functionality support
-
-## Development Commands
-
-### Development Server
-```bash
-# Start development server
-npm start
-# or
-ng serve
-
-# Start with specific port
-ng serve --port 4300
-
-# Start with host binding
-ng serve --host 0.0.0.0
-
-# Start with SSL
-ng serve --ssl
+```
+core/
+├── core.config.ts              # Core providers configuration
+├── guards/
+│   ├── auth-guard.ts           # Authentication guard
+│   └── auth-guard.spec.ts      # Guard tests
+├── interceptors/
+│   ├── auth.interceptor.ts     # JWT token interceptor
+│   └── error.interceptor.ts    # Global error handling
+├── services/
+│   ├── api.service.ts          # Base HTTP service
+│   ├── keycloak.service.ts     # Authentication service
+│   ├── logger.service.ts       # Logging service
+│   └── image.service.ts        # Image handling service
+└── store/                      # Global NgRx store
+    ├── index.ts                # Store providers export
+    ├── actions/
+    │   ├── app.actions.ts      # Application actions
+    │   └── navigation.actions.ts # Navigation actions
+    ├── effects/
+    │   ├── app.effects.ts      # Application effects
+    │   ├── navigation.effects.ts # Navigation effects
+    │   └── spinner.effects.ts  # Loading spinner effects
+    ├── reducers/
+    │   ├── app.reducer.ts      # Application reducer
+    │   └── router.reducer.ts   # Router state reducer
+    └── selectors/
+        ├── app.selectors.ts    # Application selectors
+        └── router.selectors.ts # Router selectors
 ```
 
-### Building
-```bash
-# Development build
-npm run build
-# or
-ng build
+### Features Directory (`features/`)
+Each feature follows a consistent structure with lazy-loaded modules.
 
-# Production build
-npm run build:prod
-# or
-ng build --configuration production
+#### Feature Structure Pattern
+Every feature follows this structure:
 
-# Build with stats for analysis
-npm run analyze
+```
+feature-name/
+├── feature-name.config.ts      # Feature providers configuration
+├── feature-name.routes.ts      # Feature routing
+├── components/                 # Feature-specific components
+│   └── component-name/
+│       ├── component-name.html
+│       ├── component-name.scss
+│       ├── component-name.ts   # Standalone component
+│       ├── component-name.spec.ts
+│       ├── models/             # Component-specific models
+│       ├── services/           # Component-specific services
+│       └── store/              # Component-specific state
+├── pages/                      # Feature pages/containers
+│   └── page-name/
+│       ├── page-name.component.html
+│       ├── page-name.component.scss
+│       ├── page-name.component.ts
+│       └── page-name.component.spec.ts
+├── models/                     # Feature domain models
+├── services/                   # Feature business services
+└── store/                      # Feature state management
+    ├── actions/
+    ├── effects/
+    ├── reducers/
+    └── selectors/
 ```
 
-### Testing
-```bash
-# Run unit tests
-npm test
-# or
-ng test
+### Layout Directory (`layout/`)
+Contains layout components for the application shell.
 
-# Run tests in CI mode
-npm run test:ci
-
-# Run e2e tests
-npm run e2e
-
-# Run e2e tests in CI mode
-npm run e2e:ci
+```
+layout/
+├── main-layout.component.html  # Main layout template
+├── main-layout.component.ts    # Main layout component
+├── header/
+│   └── header.component.ts     # Header component
+└── sidebar/
+    ├── sidebar.component.html  # Sidebar template
+    ├── sidebar.component.scss  # Sidebar styles
+    └── sidebar.component.ts    # Sidebar component
 ```
 
-### Code Quality
-```bash
-# Run ESLint
-npm run lint
+### Shared Directory (`shared/`)
+Contains reusable components, services, and utilities.
 
-# Fix ESLint issues
-npm run lint:fix
-
-# Format code with Prettier
-npm run format
-
-# Check if code is formatted
-npm run format:check
+```
+shared/
+├── shared.config.ts            # Shared providers
+├── components/                 # Reusable UI components
+│   ├── button/
+│   │   ├── button.component.ts # Standalone button
+│   │   └── button.stories.ts   # Storybook stories
+│   ├── input/
+│   │   ├── input.component.ts  # Form input with validation
+│   │   └── input.stories.ts
+│   ├── checkbox/
+│   ├── radio-button/
+│   ├── select/
+│   ├── dropdown/
+│   ├── modal/                  # Modal components
+│   │   ├── modal-container.component.ts
+│   │   ├── confirmation-modal.component.ts
+│   │   ├── success-modal.component.ts
+│   │   └── error-modal.component.ts
+│   └── spinner/
+├── directives/                 # Custom directives
+├── effects/                    # Shared effects
+│   ├── modal.effects.ts        # Modal state effects
+│   └── modal-actions.ts        # Modal actions
+├── models/                     # Shared models
+│   └── modal-data.ts
+└── utils/                      # Utility functions
+    └── constants.ts
 ```
 
-### Generation Commands
-```bash
-# Generate component
-ng generate component features/tasks/components/task-item
+## Configuration Patterns
 
-# Generate service
-ng generate service core/services/notification
+### App Configuration (`app.config.ts`)
+Centralized application configuration using functional approach:
 
-# Generate module
-ng generate module features/reports --routing
-
-# Generate guard
-ng generate guard core/guards/admin
-
-# Generate pipe
-ng generate pipe shared/pipes/relative-time
-```
-
-## State Management with NgRx
-
-### Store Structure
 ```typescript
-interface AppState {
-  auth: AuthState;
-  tasks: TaskState;
-  projects: ProjectState;
-  slack: SlackState;
-  ui: UiState;
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideAnimations(),
+    provideBrowserGlobalErrorListeners(),
+    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideRouter(routes),
+    provideCharts(withDefaultRegisterables()),
+    provideMarkdown(),
+    ...CORE_PROVIDERS,
+    ...AUTH_PROVIDERS,
+    ...SHARED_PROVIDERS,
+    ...FEATURE_PROVIDERS,
+  ],
+};
+```
+
+### Feature Configuration Pattern
+Each feature exports providers for dependency injection:
+
+```typescript
+// dashboard.config.ts
+export const DASHBOARD_PROVIDERS = [
+  provideState(DashboardFeatureKey, dashboardReducer),
+  provideState(InsightFeatureKey, insightReducer),
+  provideEffects(DashboardEffects, InsightEffects),
+];
+```
+
+### Core Configuration (`core.config.ts`)
+Global services and interceptors:
+
+```typescript
+export const CORE_PROVIDERS = [
+  provideHttpClient(withInterceptorsFromDi()),
+  { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
+  { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
+  provideStore(),
+  provideEffects(),
+  provideRouterStore(),
+  ...ROOT_STORE_PROVIDERS,
+  ...(isDevMode() ? [provideStoreDevtools()] : []),
+];
+```
+
+## NgRx Store Structure
+
+### Global Store (`core/store/`)
+- **App State**: Application-wide state (user, theme, loading)
+- **Router State**: Navigation and route parameters
+- **Navigation Effects**: Programmatic navigation
+
+### Feature Store Pattern
+Each feature can have multiple store slices:
+
+```typescript
+// Feature store providers
+export const INCOME_EXPENSES_PROVIDERS = [
+  provideState('incomeExpensesGrid', incomeExpensesGridReducer),
+  provideState('SubmitTransactionModalState', submitTransactionModalReducer),
+  provideState('InvoicePreviewModalState', invoicePreviewModalReducer),
+  provideState('PNLCharts', pnlChartsReducer),
+  provideState('forecast', IncomeExpensesForecastReducer),
+  provideState('aiInsightsGrid', aiInsightsGridReducer),
+  provideEffects([
+    IncomeExpensesGridEffects,
+    AiInsightsGridEffects,
+    PNLChartsEffects,
+    IncomeExpensesForecastEffects,
+    SubmitTransactionModalEffects,
+    InvoicePreviewModalEffects
+  ]),
+];
+```
+
+### Store File Organization
+```
+store/
+├── actions/          # Action creators
+├── effects/          # Side effects
+├── reducers/         # State reducers
+├── selectors/        # State selectors
+└── index.ts          # Store exports
+```
+
+## Component Structure
+
+### Standalone Components
+All components use Angular's standalone approach:
+
+```typescript
+@Component({
+  selector: 'app-dashboard',
+  imports: [CommonModule, RouterModule, ButtonComponent, CardComponent],
+  templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.scss',
+})
+export class DashboardComponent {
+  private store = inject(Store);
+  // Component logic
 }
 ```
 
-### Feature State Example (Tasks)
+### Component Features
+- **Separate HTML files**: All templates in `.html` files
+- **SCSS styling**: Component-specific styles
+- **Dependency injection**: Using `inject()` function
+- **State management**: Connected to NgRx store
+- **Type safety**: Strongly typed with interfaces
+
+### Shared Components
+Reusable UI components with:
+- **Storybook integration**: Documentation and testing
+- **Form integration**: ControlValueAccessor implementation
+- **Flexible styling**: TailwindCSS with custom classes
+- **Input validation**: Built-in error handling
+
+## Routing Structure
+
+### Lazy Loading Pattern
 ```typescript
-interface TaskState {
-  tasks: Task[];
-  selectedTask: Task | null;
-  loading: boolean;
-  error: string | null;
-  filters: TaskFilters;
-  pagination: Pagination;
-}
+export const routes: Routes = [
+  {
+    path: '',
+    component: MainLayoutComponent,
+    children: [
+      {
+        path: 'dashboard',
+        loadChildren: () => import('./features/dashboard/dashboard.routes')
+          .then(m => m.dashboardRoutes),
+      },
+      {
+        path: 'expenses',
+        loadChildren: () => import('./features/income-expenses/income-expenses.routes')
+          .then(ie => ie.incomeExpensesRoutes),
+      },
+    ],
+  },
+];
 ```
 
-### Actions, Reducers, Effects Pattern
-- **Actions**: Define what happened
-- **Reducers**: Define how state changes
-- **Effects**: Handle side effects (API calls, navigation)
-- **Selectors**: Query state data
+### Feature Routes with Providers
+```typescript
+export const dashboardRoutes: Routes = [
+  {
+    path: '',
+    component: DashboardComponent,
+    providers: [...DASHBOARD_PROVIDERS],
+  },
+  {
+    path: 'insight',
+    component: InsightComponent,
+    providers: [...DASHBOARD_PROVIDERS],
+  },
+];
+```
 
 ## Styling Architecture
 
-### Tailwind CSS Configuration
-- **Custom color palette** for branding
-- **Extended spacing** for consistent layouts
-- **Custom animations** for micro-interactions
-- **Component utilities** for task priorities and statuses
-- **Dark mode** support with class strategy
+### TailwindCSS Integration
+- **Utility-first**: TailwindCSS for rapid development
+- **Custom tokens**: Design system in `_tokens.scss`
+- **Component styles**: SCSS for component-specific styling
+- **Responsive design**: Mobile-first approach
 
-### SCSS Organization
-- **Global styles** in `styles.scss`
-- **Component styles** co-located with components
-- **Utility mixins** for common patterns
-- **Theme variables** for consistency
+### Styling Files
+```
+styles/
+├── _tokens.scss      # Design system tokens
+├── styles.scss       # Global styles
+└── tailwind.css      # TailwindCSS imports
+```
 
-### Component Styling Strategy
-```scss
-// Component-specific styles
-.task-card {
-  @apply bg-white rounded-lg shadow-md p-4 border border-gray-200;
+## Service Architecture
+
+### API Service Pattern
+Base service for HTTP operations:
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class ApiService {
+  private readonly apiUrl = environment.apiUrl;
   
-  &--priority-high {
-    @apply border-orange-400 bg-orange-50;
+  get<T>(endpoint: string, options?: object): Observable<T> {
+    return this.http.get<T>(`${this.apiUrl}${endpoint}`, options);
   }
+  // Other HTTP methods
+}
+```
+
+### Feature Services
+Business logic services per feature:
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class DashboardService {
+  private readonly endpoint = 'finance/dashboard';
   
-  &--selected {
-    @apply ring-2 ring-blue-500;
+  constructor(private apiService: ApiService) {}
+  
+  getFinancialOverview(): Observable<IFinancialOverview> {
+    return this.apiService.get<IFinancialOverview>(`${this.endpoint}/company/overview`);
   }
 }
 ```
 
 ## Environment Configuration
 
-### Development Environment
+### Environment Files
 ```typescript
+// environment.ts
 export const environment = {
   production: false,
-  apiUrl: 'https://localhost:5001/api',
-  slackClientId: 'dev-slack-client-id',
-  signalrUrl: 'https://localhost:5001/hubs',
-  enableDevTools: true,
-  logLevel: 'debug'
+  apiUrl: 'http://localhost:8000/api/',
+  keycloakBaseUrl: 'http://localhost:8080/',
+  keycloakUserId: 'api-frontend',
+  stripePublishableKey: 'pk_test_...',
 };
 ```
 
-### Production Environment
-```typescript
-export const environment = {
-  production: true,
-  apiUrl: 'https://api.taskmanager.com/api',
-  slackClientId: 'prod-slack-client-id',
-  signalrUrl: 'https://api.taskmanager.com/hubs',
-  enableDevTools: false,
-  logLevel: 'error'
-};
-```
+## Testing Structure
 
-## API Integration
+### Testing Files
+- `*.spec.ts` - Unit tests for components, services
+- `karma.conf.js` - Test runner configuration
+- Jasmine framework for testing
 
-### HTTP Client Configuration
+## Key Architectural Patterns
+
+1. **Feature-based organization**: Each feature is self-contained
+2. **Standalone components**: No NgModules, using standalone components
+3. **Functional configuration**: Using provider functions for setup
+4. **Lazy loading**: Code splitting by features
+5. **State management**: NgRx for complex state management
+6. **Separation of concerns**: Clear separation of components, services, models
+7. **Type safety**: Strong TypeScript typing throughout
+8. **Responsive design**: Mobile-first with TailwindCSS
+9. **Testing**: Unit tests for all components and services
+10. **Documentation**: Storybook for component library
+
+## Dependency Injection Requirements
+
+### **MANDATORY: Always use `inject()` function**
+- **NEVER use constructor dependency injection**
+- **ALWAYS use the `inject()` function for all service dependencies**
+- This applies to components, services, guards, effects, and all other Angular classes
+
+#### ✅ Correct Pattern:
 ```typescript
-@Injectable()
-export class ApiService {
-  constructor(private http: HttpClient) {}
+@Component({
+  selector: 'app-example',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './example.component.html'
+})
+export class ExampleComponent {
+  private store = inject(Store);
+  private router = inject(Router);
+  private apiService = inject(ApiService);
   
-  getTasks(): Observable<Task[]> {
-    return this.http.get<Task[]>('/api/tasks');
-  }
+  // Component logic here
 }
 ```
 
-### Error Handling
-- Global error interceptor for HTTP errors
-- User-friendly error messages
-- Retry mechanisms for failed requests
-- Loading states and error boundaries
-
-## Testing Strategy
-
-### Unit Testing
-- Component testing with TestBed
-- Service testing with mocks
-- Pipe and directive testing
-- NgRx testing (actions, reducers, effects)
-
-### Integration Testing
-- Component integration testing
-- Service integration with HTTP client
-- Store integration testing
-- Route testing
-
-### E2E Testing
-- User workflow testing
-- Cross-browser compatibility
-- Mobile device testing
-- Performance testing
-
-## Performance Optimization
-
-### Lazy Loading
-```typescript
-const routes: Routes = [
-  {
-    path: 'tasks',
-    loadChildren: () => import('./features/tasks/tasks.module').then(m => m.TasksModule)
-  }
-];
-```
-
-### Change Detection Strategy
+#### ❌ Incorrect Pattern (DO NOT USE):
 ```typescript
 @Component({
-  changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'app-example',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './example.component.html'
 })
-export class TaskListComponent {}
+export class ExampleComponent {
+  constructor(
+    private store: Store,
+    private router: Router,
+    private apiService: ApiService
+  ) {} // NEVER use constructor injection
+}
 ```
 
-### Bundle Optimization
-- Code splitting with lazy modules
-- Tree shaking for unused code
-- Bundle analysis and optimization
-- Service worker for caching
+#### Service Example:
+```typescript
+@Injectable({ providedIn: 'root' })
+export class ExampleService {
+  private http = inject(HttpClient);
+  private config = inject(CONFIG_TOKEN);
+  
+  // Service methods here
+}
+```
 
-## Security Considerations
+#### Effects Example:
+```typescript
+@Injectable()
+export class ExampleEffects {
+  private actions$ = inject(Actions);
+  private service = inject(ExampleService);
+  private store = inject(Store);
+  
+  // Effects here
+}
+```
 
-### Authentication & Authorization
-- JWT token management
-- Route guards for protected areas
-- Role-based access control
-- Session timeout handling
+### Benefits of `inject()`:
+- **Cleaner code**: No constructor boilerplate
+- **Better tree-shaking**: More efficient bundling
+- **Conditional injection**: Can be used conditionally
+- **Modern Angular**: Aligns with latest Angular patterns
+- **Functional style**: Supports functional programming approaches
 
-### XSS Prevention
-- Angular's built-in sanitization
-- Content Security Policy (CSP)
-- Input validation and sanitization
+## List Management Requirements
 
-### Data Protection
-- Sensitive data encryption
-- Secure local storage
-- HTTPS-only cookies
-- API rate limiting
+### List Creation and Management
+- Users can create, edit, and delete Lists
+- When the board is empty, show a placeholder column with header "Add another list" and a "+" button
+- Clicking "+" creates a new List with the ability to enter its Name
+- Lists can be edited via a context menu; the Name becomes editable with Save/Cancel buttons
+- When a List is deleted, all Cards within that List must also be deleted
+- A placeholder "Add another list" with a "+" button should always be present at the end
 
-## Accessibility (a11y)
+### List Display and Ordering
+- Each List header should display the number of Cards it contains
+- Cards inside a List should be ordered primarily by:
+  1. Due Date (descending, nulls last)
+  2. Priority (High → Low) 
+  3. CreatedAt (descending)
 
-### Angular CDK A11y
-- Focus management
-- Live announcer for screen readers
-- Keyboard navigation support
-- ARIA attributes
-
-### WCAG 2.1 Compliance
-- Semantic HTML structure
-- Color contrast requirements
-- Keyboard accessibility
-- Screen reader compatibility
-
-This frontend application provides a modern, scalable, and maintainable foundation for the Task Manager with comprehensive Slack integration, following Angular best practices and industry standards.
+This structure provides a scalable, maintainable, and modern Angular application architecture suitable for enterprise-level applications.
