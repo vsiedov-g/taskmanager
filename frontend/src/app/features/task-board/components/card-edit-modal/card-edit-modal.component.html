@@ -1,0 +1,334 @@
+<!-- Modal Backdrop -->
+<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="onCancel()">
+  <!-- Modal Container -->
+  <div class="bg-white rounded-xl shadow-xl w-full max-w-5xl mx-4 h-[70vh] overflow-hidden" (click)="$event.stopPropagation()">
+    @if (currentTask) {
+      <!-- Modal Header -->
+      <div class="bg-slate-600 text-white px-6 py-4 rounded-t-xl flex items-center justify-end">
+        <!-- Close Button -->
+        <button
+          type="button"
+          (click)="onCancel()"
+          class="text-gray-300 hover:text-white focus:outline-none transition-colors">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body - Two Column Layout -->
+      <div class="flex h-full">
+        <!-- Left Column - Main Content -->
+        <div class="flex-1 px-6 py-6 overflow-y-auto">
+          @if (!editMode) {
+            <!-- View Mode -->
+            <!-- Title Section -->
+            <div class="flex items-center justify-between mb-6">
+              <h1 class="text-2xl font-bold text-gray-900">{{ currentTask.title }}</h1>
+              <button
+                type="button"
+                (click)="editMode = true"
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-slate-600 border border-transparent rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition-colors">
+                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit card
+              </button>
+            </div>
+
+            <!-- Card Fields Section -->
+            <div class="space-y-4 mb-6">
+              <!-- List Field -->
+              <div class="flex items-center space-x-3">
+                <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <span class="text-sm font-medium text-gray-700">List:</span>
+                <div class="relative">
+                  <select 
+                    [value]="currentTask.listId"
+                    (change)="onListChange($event)"
+                    class="appearance-none bg-white border border-gray-300 rounded px-3 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500">
+                    @for (list of lists$ | async; track list.id) {
+                      <option [value]="list.id">{{ list.name }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <!-- Due Date Field -->
+              <div class="flex items-center space-x-3">
+                <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="text-sm font-medium text-gray-700">Due date:</span>
+                <span class="text-sm text-gray-600">{{ currentTask.dueDate ? getFormattedDate(currentTask.dueDate) : 'No due date' }}</span>
+              </div>
+
+              <!-- Priority Field -->
+              <div class="flex items-center space-x-3">
+                <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                <span class="text-sm font-medium text-gray-700">Priority:</span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" [class]="getPriorityClass(currentTask.priority)">
+                  {{ getPriorityDisplayName(currentTask.priority) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Description Section -->
+            <div class="mb-6">
+              <h3 class="text-lg font-bold text-gray-900 mb-3">Description</h3>
+              <div class="text-gray-600 leading-relaxed">
+                {{ currentTask.description }}
+              </div>
+            </div>
+
+            <!-- Delete Button -->
+            <div class="flex justify-start">
+              <button
+                type="button"
+                (click)="onDelete()"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-red-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete Card
+              </button>
+            </div>
+          } @else {
+            <!-- Edit Mode -->
+            <div class="flex items-center justify-between mb-6">
+              <button
+                type="button"
+                (click)="editMode = false"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Go back
+              </button>
+              <h2 class="text-lg font-bold text-gray-900">Edit Card</h2>
+            </div>
+            
+            <form [formGroup]="cardForm" (ngSubmit)="onSubmit()" class="space-y-5">
+              <!-- Card Name -->
+              <div>
+                <label for="edit-title" class="block text-sm font-medium text-gray-700 mb-2">
+                  Card name *
+                </label>
+                <input
+                  id="edit-title"
+                  type="text"
+                  formControlName="title"
+                  placeholder="Enter card name"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors text-sm"
+                  [class.border-red-300]="getFieldError('title')"
+                  [class.focus:ring-red-500]="getFieldError('title')"
+                  [class.focus:border-red-500]="getFieldError('title')">
+                @if (getFieldError('title')) {
+                  <p class="mt-1 text-sm text-red-600">{{ getFieldError('title') }}</p>
+                }
+              </div>
+
+              <!-- Description -->
+              <div>
+                <label for="edit-description" class="block text-sm font-medium text-gray-700 mb-2">
+                  Description *
+                </label>
+                <textarea
+                  id="edit-description"
+                  formControlName="description"
+                  placeholder="Enter card description"
+                  rows="4"
+                  class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors resize-none text-sm"
+                  [class.border-red-300]="getFieldError('description')"
+                  [class.focus:ring-red-500]="getFieldError('description')"
+                  [class.focus:border-red-500]="getFieldError('description')"></textarea>
+                @if (getFieldError('description')) {
+                  <p class="mt-1 text-sm text-red-600">{{ getFieldError('description') }}</p>
+                }
+              </div>
+
+              <!-- Due Date and Priority Row -->
+              <div class="grid grid-cols-2 gap-4">
+                <!-- Due Date -->
+                <div>
+                  <label for="edit-dueDate" class="block text-sm font-medium text-gray-700 mb-2">
+                    Due date *
+                  </label>
+                  <input
+                    id="edit-dueDate"
+                    type="date"
+                    formControlName="dueDate"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors text-sm"
+                    [class.border-red-300]="getFieldError('dueDate')"
+                    [class.focus:ring-red-500]="getFieldError('dueDate')"
+                    [class.focus:border-red-500]="getFieldError('dueDate')">
+                  @if (getFieldError('dueDate')) {
+                    <p class="mt-1 text-sm text-red-600">{{ getFieldError('dueDate') }}</p>
+                  }
+                </div>
+
+                <!-- Priority -->
+                <div>
+                  <label for="edit-priority" class="block text-sm font-medium text-gray-700 mb-2">
+                    Priority *
+                  </label>
+                  <select
+                    id="edit-priority"
+                    formControlName="priority"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors text-sm bg-white">
+                    @for (priority of priorities; track priority.value) {
+                      <option [value]="priority.value">{{ priority.label }}</option>
+                    }
+                  </select>
+                  @if (getFieldError('priority')) {
+                    <p class="mt-1 text-sm text-red-600">{{ getFieldError('priority') }}</p>
+                  }
+                </div>
+              </div>
+
+              <!-- List and Assignee Row -->
+              <div class="grid grid-cols-2 gap-4">
+                <!-- List Selection -->
+                <div>
+                  <label for="edit-listId" class="block text-sm font-medium text-gray-700 mb-2">
+                    List *
+                  </label>
+                  <select
+                    id="edit-listId"
+                    formControlName="listId"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors text-sm bg-white"
+                    [class.border-red-300]="getFieldError('listId')"
+                    [class.focus:ring-red-500]="getFieldError('listId')"
+                    [class.focus:border-red-500]="getFieldError('listId')">
+                    <option value="" disabled>Select a list</option>
+                    @for (list of lists$ | async; track list.id) {
+                      <option [value]="list.id">{{ list.name }}</option>
+                    }
+                  </select>
+                  @if (getFieldError('listId')) {
+                    <p class="mt-1 text-sm text-red-600">{{ getFieldError('listId') }}</p>
+                  }
+                </div>
+
+                <!-- Assignee -->
+                <div>
+                  <label for="edit-assigneeId" class="block text-sm font-medium text-gray-700 mb-2">
+                    Assignee
+                  </label>
+                  <select
+                    id="edit-assigneeId"
+                    formControlName="assigneeId"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors text-sm bg-white">
+                    <option value="">Unassigned</option>
+                    @for (member of boardMembers$ | async; track member.userId) {
+                      <option [value]="member.userId">{{ member.userName }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <!-- Error Display -->
+              @if (error$ | async; as error) {
+                <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p class="text-sm text-red-700">{{ error }}</p>
+                </div>
+              }
+
+              <!-- Form Actions -->
+              <div class="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  (click)="editMode = false"
+                  class="px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  [disabled]="cardForm.invalid || (isUpdating$ | async)"
+                  class="px-6 py-3 text-sm font-medium text-white bg-slate-600 border border-transparent rounded-lg hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors min-w-[120px]">
+                  @if (isUpdating$ | async) {
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Saving...
+                  } @else {
+                    Save Changes
+                  }
+                </button>
+              </div>
+            </form>
+          }
+        </div>
+        
+        <!-- Right Column - Activity Section -->
+        <div class="w-80 border-l border-gray-200 bg-white overflow-y-auto">
+          <div class="p-6">
+            <h3 class="text-lg font-bold text-gray-900 mb-4">Activity</h3>
+            
+            <!-- Activity Feed -->
+            <div class="space-y-4">
+              @if (cardActivityLogs$ | async; as activityLogs) {
+                @if (activityLogs.length === 0) {
+                  <div class="text-sm text-gray-500 text-center py-8">
+                    No activity yet
+                  </div>
+                } @else {
+                  @for (activityLog of activityLogs; track activityLog.id) {
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-start space-x-3">
+                        <div class="w-1.5 h-1.5 bg-gray-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div class="flex-1">
+                          <div class="text-sm text-gray-700">{{ formatActivityDescription(activityLog) }}</div>
+                        </div>
+                      </div>
+                      <div class="text-xs text-gray-500 whitespace-nowrap ml-2">{{ getRelativeTime(activityLog.createdAt) }}</div>
+                    </div>
+                  }
+                  
+                  <!-- Load More Button -->
+                  @if ((hasMoreLogs$ | async) || activityLogs.length >= 5) {
+                    <div class="flex justify-center pt-4">
+                      <button
+                        type="button"
+                        (click)="loadMoreActivityLogs()"
+                        [disabled]="isLoadingMoreLogs$ | async"
+                        class="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-300 rounded-md hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        @if (isLoadingMoreLogs$ | async) {
+                          <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-600 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Loading...
+                        } @else {
+                          Load More (20)
+                        }
+                      </button>
+                    </div>
+                  }
+                }
+              } @else {
+                <!-- Loading state -->
+                <div class="space-y-4">
+                  @for (item of [1, 2, 3]; track item) {
+                    <div class="flex items-start space-x-3 animate-pulse">
+                      <div class="w-2 h-2 bg-gray-300 rounded-full mt-2 flex-shrink-0"></div>
+                      <div class="flex-1">
+                        <div class="h-4 bg-gray-300 rounded w-3/4"></div>
+                      </div>
+                      <div class="w-12 h-3 bg-gray-300 rounded"></div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>

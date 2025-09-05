@@ -1,0 +1,350 @@
+<!-- Task Board Layout -->
+<div class="h-screen bg-gray-50 p-6 flex flex-col">
+  <!-- Header -->
+  <div class="mb-6 flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center space-x-4">
+      <app-board-selector (boardSelected)="onBoardSelected($event)"></app-board-selector>
+      @if (currentBoard && currentBoard.joinCode) {
+        <div class="flex items-center space-x-2">
+          <div class="border-l border-gray-300 h-6"></div>
+          <div class="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-md">
+            <h1 class="text-2xl font-bold text-gray-900">
+              {{ currentBoard.joinCode }}
+            </h1>
+            <button 
+              class="text-gray-500 hover:text-gray-700 transition-colors p-1 rounded hover:bg-gray-200"
+              (click)="copyJoinCode(currentBoard.joinCode)"
+              [title]="headerCopiedMessage || 'Copy join code'">
+              @if (headerCopiedMessage) {
+                <svg class="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+              } @else {
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              }
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+    <div class="flex items-center space-x-4">
+      <button 
+        class="flex items-center space-x-2 rounded-md bg-white px-4 py-2 shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"
+        (click)="onOpenHistorySidebar()">
+        <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-gray-700">History</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Kanban Board -->
+  <div #boardContainer class="flex-1 overflow-x-auto overflow-y-hidden relative" 
+       (wheel)="onBoardWheel($event)"
+       style="min-height: 0;">
+    <div class="flex gap-4 h-full" style="width: max-content; min-width: 100%; justify-content: center;">
+    
+    
+    <!-- Left Scroll Zone Indicator -->
+    <div class="absolute left-0 top-0 bottom-0 w-25 bg-gradient-to-r from-blue-500/20 to-transparent pointer-events-none z-10 transition-opacity duration-200"
+         [class.opacity-100]="(draggedTask || draggedList) && showLeftScrollZone"
+         [class.opacity-0]="(!draggedTask && !draggedList) || !showLeftScrollZone">
+      <div class="flex items-center justify-center h-full">
+        <svg class="w-6 h-6 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </div>
+    </div>
+    
+    <!-- Right Scroll Zone Indicator -->
+    <div class="absolute right-0 top-0 bottom-0 w-25 bg-gradient-to-l from-blue-500/20 to-transparent pointer-events-none z-10 transition-opacity duration-200"
+         [class.opacity-100]="(draggedTask || draggedList) && showRightScrollZone"
+         [class.opacity-0]="(!draggedTask && !draggedList) || !showRightScrollZone">
+      <div class="flex items-center justify-center h-full">
+        <svg class="w-6 h-6 text-blue-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+    </div>
+    <!-- Empty Board State -->
+    @if (isBoardEmpty$ | async) {
+      <!-- Empty Board Placeholder -->
+      <div class="w-80 flex-shrink-0">
+        @if (!(isAddingList$ | async)) {
+          <!-- Add First List Button -->
+          <div class="bg-white bg-opacity-60 rounded-lg border-2 border-dashed border-gray-300 p-8 text-center">
+            <div class="flex flex-col items-center space-y-4">
+              <svg class="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Add another list</h3>
+                <button 
+                  class="inline-flex items-center px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                  (click)="onStartAddingList()">
+                  <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add List
+                </button>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <!-- Add First List Form -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <input
+              type="text"
+              [(ngModel)]="newListTitle"
+              placeholder="Enter list title..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent mb-3"
+              (keydown)="onNewListKeydown($event)"
+              #listTitleInput>
+            
+            <div class="flex space-x-2">
+              <button
+                (click)="onSaveNewList()"
+                [disabled]="!newListTitle.trim()"
+                class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-1 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Add list
+              </button>
+              <button
+                (click)="onCancelAddingList()"
+                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- List Columns -->
+      @for (column of listColumns$ | async; track trackByListId($index, column); let i = $index) {
+        <!-- Drop zone before each list -->
+        <div class="w-2 flex-shrink-0 h-full relative list-drop-zone"
+             (dragover)="onDragOver($event)"
+             (dragenter)="onListDropZoneEnter($event, i)"
+             (dragleave)="onListDropZoneLeave($event)"
+             (drop)="onListDrop($event, i)"
+             [class.bg-blue-400]="isDragOverPosition === i"
+             [class.rounded]="isDragOverPosition === i"
+             [class.drag-over]="isDragOverPosition === i">
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full w-80 flex-shrink-0 list-column relative"
+             [class.opacity-50]="draggedList === column.id">
+          
+          <!-- List container drop zone overlay -->
+          <div class="absolute inset-0 pointer-events-none list-container-drop-zone"
+               [class.pointer-events-auto]="draggedList !== null && draggedList !== column.id"
+               [class.drop-target-active]="dragOverListIndex === i"
+               (dragenter)="onListContainerEnter($event, i)"
+               (dragleave)="onListContainerLeave($event, i)"
+               (dragover)="onDragOver($event)"
+               (drop)="onListContainerDrop($event, i)">
+            <!-- Insertion indicator -->
+            <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 opacity-0 transition-opacity duration-200"
+                 [class.opacity-100]="dragOverListIndex === i">
+            </div>
+            
+            <!-- Helper text for drop target -->
+            @if (dragOverListIndex === i) {
+              <div class="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-md opacity-90 pointer-events-none">
+                Drop to insert here
+              </div>
+            }
+          </div>
+          <!-- Column Header -->
+          <div class="p-4 border-b border-gray-200 flex-shrink-0 list-header cursor-grab hover:cursor-grab"
+               [draggable]="(editingListId$ | async) !== column.id"
+               (dragstart)="onListDragStart($event, column.id)"
+               (dragend)="onListDragEnd($event)"
+               [class.cursor-grabbing]="draggedList === column.id"
+               [class.cursor-grab]="draggedList !== column.id && (editingListId$ | async) !== column.id">
+            @if ((editingListId$ | async) === column.id) {
+              <!-- Edit Mode -->
+              <div class="mb-2">
+                <input
+                  type="text"
+                  [value]="column.name"
+                  #editInput
+                  class="w-full px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500 font-semibold text-gray-900"
+                  (keydown.enter)="onSaveEditList(column.id, editInput.value)"
+                  (keydown.escape)="onCancelEditList()"
+                  (blur)="onSaveEditList(column.id, editInput.value)">
+                <div class="flex space-x-2 mt-2">
+                  <button
+                    (click)="onSaveEditList(column.id, editInput.value)"
+                    class="text-xs px-2 py-1 bg-slate-600 text-white rounded hover:bg-slate-700">
+                    Save
+                  </button>
+                  <button
+                    (click)="onCancelEditList()"
+                    class="text-xs px-2 py-1 text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <!-- Display Mode -->
+              <div class="flex items-center justify-between mb-2">
+                <h2 class="font-semibold text-gray-900">{{ column.name }}</h2>
+                <div class="flex items-center space-x-2">
+                  <span class="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded-full">{{ column.taskCount }}</span>
+                  <!-- Context Menu Button -->
+                  <div class="relative">
+                    <button 
+                      class="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"
+                      [id]="'menu-button-' + column.id"
+                      #menuButton
+                      (click)="toggleContextMenu(column.id, $event)">
+                      <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+                    <!-- Context Menu -->
+                    @if (showContextMenu === column.id) {
+                      <div class="absolute right-0 top-8 w-32 bg-white border border-gray-200 rounded-lg shadow-lg z-10"
+                           >
+                        <button
+                          (click)="onEditList(column.id); hideContextMenu()"
+                          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+                          Edit
+                        </button>
+                        <button
+                          (click)="onDeleteList(column.id); hideContextMenu()"
+                          class="w-full text-left px-4 py-2 text-sm text-red-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-b-lg">
+                          Delete
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Add New Card Button -->
+          <div class="p-4 border-b border-gray-100 flex-shrink-0">
+            <button 
+              class="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-500 hover:border-gray-400 hover:text-gray-600 flex items-center justify-center transition-colors"
+              (click)="onAddNewCard(column.id)">
+              <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Add new card
+            </button>
+          </div>
+
+          <!-- Task Cards -->
+          <div class="p-4 space-y-3 flex-1 overflow-y-auto transition-colors border-2 border-transparent"
+               (dragover)="onDragOver($event)"
+               (dragenter)="onDragEnter($event, column.id)"
+               (dragleave)="onDragLeave($event, column.id)"
+               (drop)="onDrop($event, column.id)"
+               [class.bg-blue-50]="isDragOverList === column.id"
+               [class.border-blue-300]="isDragOverList === column.id"
+               [class.border-dashed]="isDragOverList === column.id">
+            @for (task of column.tasks; track trackByTaskId($index, task)) {
+              <app-task-card 
+                [task]="task"
+                [availableStatuses]="getAvailableStatuses(task.status)"
+                [availableLists]="(sortedLists$ | async) || []"
+                (statusChanged)="onTaskStatusChanged($event)"
+                (listChanged)="onTaskListChanged($event)"
+                (cardClicked)="onCardClicked($event)"
+                (dragStart)="onTaskDragStart($event)"
+                (dragEnd)="onTaskDragEnd($event)">
+              </app-task-card>
+            }
+            
+            @empty {
+              <div class="text-center py-8 text-gray-500">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <p class="text-sm">No tasks in this list</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Final drop zone after all lists -->
+      @if (listColumnsCount > 0) {
+        <div class="w-2 flex-shrink-0 h-full relative list-drop-zone"
+             (dragover)="onDragOver($event)"
+             (dragenter)="onListDropZoneEnter($event, listColumnsCount)"
+             (dragleave)="onListDropZoneLeave($event)"
+             (drop)="onListDrop($event, listColumnsCount)"
+             [class.bg-blue-400]="isDragOverPosition === listColumnsCount"
+             [class.rounded]="isDragOverPosition === listColumnsCount"
+             [class.drag-over]="isDragOverPosition === listColumnsCount">
+        </div>
+      }
+
+      <!-- Add Another List Section (Always present at the end) -->
+      <div class="w-80 flex-shrink-0">
+        @if (!(isAddingList$ | async)) {
+          <!-- Add List Button -->
+          <button 
+            class="w-full h-16 bg-white bg-opacity-60 hover:bg-opacity-80 rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-400 flex items-center justify-center transition-colors text-gray-600 hover:text-gray-800"
+            (click)="onStartAddingList()">
+            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <span class="font-medium">Add another list</span>
+          </button>
+        } @else {
+          <!-- Add List Form -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <input
+              type="text"
+              [(ngModel)]="newListTitle"
+              placeholder="Enter list title..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent mb-3"
+              (keydown)="onNewListKeydown($event)"
+              #listTitleInput>
+            
+            <div class="flex space-x-2">
+              <button
+                (click)="onSaveNewList()"
+                [disabled]="!newListTitle.trim()"
+                class="px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-1 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                Add list
+              </button>
+              <button
+                (click)="onCancelAddingList()"
+                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors">
+                Cancel
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    </div> <!-- Close inner centering div -->
+  </div>
+
+  <!-- Card Creation Modal -->
+  @if (isCreateCardModalOpen$ | async) {
+    <app-card-creation-modal></app-card-creation-modal>
+  }
+
+  <!-- Card Edit Modal -->
+  @if (isEditCardModalOpen$ | async) {
+    <app-card-edit-modal></app-card-edit-modal>
+  }
+
+  <!-- History Sidebar -->
+  @if (isHistorySidebarOpen) {
+    <app-history-sidebar 
+      [boardId]="currentBoardId!"
+      (closeSidebar)="onCloseHistorySidebar()">
+    </app-history-sidebar>
+  }
+</div>

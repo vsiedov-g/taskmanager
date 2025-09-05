@@ -1,0 +1,84 @@
+// Modal backdrop with blur effect
+.modal-backdrop {
+  backdrop-filter: blur(2px);
+}
+
+// Enhanced form styling
+input,
+textarea,
+select {
+  font-size: 14px;
+  line-height: 1.5;
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+  }
+  
+  &::placeholder {
+    color: #9ca3af;
+  }
+}
+
+// Date input specific styling
+input[type="date"] {
+  color-scheme: light;
+  
+  &::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: invert(0.5);
+  }
+}
+
+// Select dropdown styling
+select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+  
+  &:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%233b82f6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  }
+}
+
+// Smooth transitions
+input,
+textarea,
+select,
+button {
+  transition: all 0.15s ease-in-out;
+}
+
+// Button styling enhancements
+button {
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+// Modal container shadow
+.bg-white.rounded-xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+// Form validation error styling
+.border-red-300 {
+  border-color: #fca5a5 !important;
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1) !important;
+    border-color: #ef4444 !important;
+  }
+}
+
+// Grid gap consistency
+.grid-cols-2 {
+  align-items: start;
+}
+
+// Label styling
+label {
+  font-weight: 500;
+  color: #374151;
+}

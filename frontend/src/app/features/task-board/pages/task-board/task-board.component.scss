@@ -1,0 +1,158 @@
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden; // Prevent page-level scrolling
+}
+
+// Horizontal scrollbar styles for board container
+.overflow-x-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+  
+  &::-webkit-scrollbar {
+    height: 12px;
+    width: 12px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+  
+  &::-webkit-scrollbar-corner {
+    background: #f1f1f1;
+  }
+}
+
+// Custom scrollbar styles for task cards container (vertical)
+:host ::ng-deep .flex-1.overflow-y-auto {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+    
+    &:hover {
+      background: #a8a8a8;
+    }
+  }
+}
+
+.add-card-button {
+  transition: all 0.2s ease-in-out;
+  
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+// List drag and drop styles
+.list-header {
+  user-select: none;
+  
+  &.cursor-grab {
+    cursor: grab !important;
+  }
+  
+  &.cursor-grabbing {
+    cursor: grabbing !important;
+  }
+  
+  // Prevent dragging when editing
+  &:has(input) {
+    cursor: default !important;
+    pointer-events: auto;
+    
+    input {
+      cursor: text !important;
+    }
+  }
+}
+
+// Drop zone styles
+.list-drop-zone {
+  transition: all 0.2s ease-in-out;
+  
+  &.drag-over {
+    background-color: rgba(59, 130, 246, 0.5);
+    border-radius: 4px;
+  }
+}
+
+// List container drop zone styles
+.list-container-drop-zone {
+  z-index: 10;
+  transition: all 0.2s ease-in-out;
+  
+  &.drop-target-active {
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 2px dashed rgba(59, 130, 246, 0.4);
+    border-radius: 8px;
+  }
+  
+  // Insertion indicator styling
+  .bg-blue-500 {
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+    z-index: 20;
+  }
+}
+
+// Enhanced visual feedback for list columns during drag
+.list-column {
+  transition: all 0.2s ease-in-out;
+  
+  &:has(.drop-target-active) {
+    transform: translateX(4px);
+    border-left: 3px solid #3b82f6;
+  }
+}
+
+// Prevent task cards from interfering with list container drops
+.list-container-drop-zone.pointer-events-auto {
+  // Ensure drop zone is above task cards
+  z-index: 15;
+  
+  // Show subtle hover state
+  &:hover {
+    background-color: rgba(59, 130, 246, 0.05);
+  }
+}
+
+// Horizontal scrolling behavior
+.overflow-x-auto {
+  -webkit-overflow-scrolling: touch; // iOS smooth scrolling
+}
+
+@media (max-width: 768px) {
+  :host {
+    height: auto;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  
+  // On mobile, ensure horizontal scrolling works well
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; // Hide scrollbar on mobile
+    
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}

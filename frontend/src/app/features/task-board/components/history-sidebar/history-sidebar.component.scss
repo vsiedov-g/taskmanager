@@ -1,0 +1,33 @@
+// History Sidebar Styles
+
+.history-sidebar {
+  // Custom scrollbar for the content area
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+}
+
+// Ensure proper text wrapping for long item names
+.activity-text {
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+// Column pill styling
+.column-pill {
+  white-space: nowrap;
+  font-weight: 500;
+}

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(D:\\projects\\taskmanager\\backend\\src\\TaskManager.API/**)",
+      "Read(D:\\projects\\taskmanager\\backend/**)",
+      "Read(D:\\projects\\taskmanager\\backend/**)",
+      "Read(D:\\projects\\taskmanager\\backend\\src\\TaskManager.Application/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
