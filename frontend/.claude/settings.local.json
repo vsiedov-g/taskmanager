@@ -4,7 +4,14 @@
       "Read(D:\\projects\\taskmanager\\backend\\src\\TaskManager.API/**)",
       "Read(D:\\projects\\taskmanager\\backend/**)",
       "Read(D:\\projects\\taskmanager\\backend/**)",
-      "Read(D:\\projects\\taskmanager\\backend\\src\\TaskManager.Application/**)"
+      "Read(D:\\projects\\taskmanager\\backend\\src\\TaskManager.Application/**)",
+      "Bash(npm install:*)",
+      "Bash(npx storybook@latest init:*)",
+      "Bash(npx storybook:*)",
+      "Bash(npm run storybook:*)",
+      "Bash(npx playwright:*)",
+      "Bash(npx ng build:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
