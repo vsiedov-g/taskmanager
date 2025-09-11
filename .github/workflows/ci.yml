@@ -28,6 +28,9 @@ jobs:
       - name: Build backend
         run: dotnet build ./backend/TaskManager.sln --configuration Release --no-restore
 
+      - name: Run backend tests
+        run: dotnet test ./backend/TaskManager.sln --configuration Release --no-build --verbosity normal
+
   frontend-build:
     name: Build Frontend
     runs-on: ubuntu-latest
@@ -47,3 +50,7 @@ jobs:
       - name: Build frontend
         working-directory: ./frontend
         run: npm run build:prod
+
+      - name: Run frontend tests
+        working-directory: ./frontend
+        run: npm run test:ci
