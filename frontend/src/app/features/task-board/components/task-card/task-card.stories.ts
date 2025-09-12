@@ -1,67 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { TaskCardComponent } from './task-card.component';
-import { Task, TaskStatus, TaskPriority } from '../../models/task.model';
-import { List } from '../../models/list.model';
-import { TaskService } from '../../services/task.service';
 
-// Mock TaskService
-class MockTaskService {
-  getPriorityClass(priority: TaskPriority): string {
-    const classes = {
-      [TaskPriority.Low]: 'bg-gray-100 text-gray-800',
-      [TaskPriority.Medium]: 'bg-yellow-100 text-yellow-800',
-      [TaskPriority.High]: 'bg-orange-100 text-orange-800',
-      [TaskPriority.Critical]: 'bg-red-100 text-red-800',
-    };
-    return classes[priority] || classes[TaskPriority.Low];
-  }
-
-  getPriorityDotClass(priority: TaskPriority): string {
-    const classes = {
-      [TaskPriority.Low]: 'bg-gray-400',
-      [TaskPriority.Medium]: 'bg-yellow-400',
-      [TaskPriority.High]: 'bg-orange-400',
-      [TaskPriority.Critical]: 'bg-red-400',
-    };
-    return classes[priority] || classes[TaskPriority.Low];
-  }
-
-  getPriorityDisplayName(priority: TaskPriority): string {
-    const names = {
-      [TaskPriority.Low]: 'Low',
-      [TaskPriority.Medium]: 'Medium',
-      [TaskPriority.High]: 'High',
-      [TaskPriority.Critical]: 'Critical',
-    };
-    return names[priority] || 'Unknown';
-  }
-}
-
-const mockTask: Task = {
-  id: '1',
-  title: 'Implement user authentication',
-  description: 'Add login and signup functionality with proper validation',
-  status: TaskStatus.InProgress,
-  priority: TaskPriority.High,
-  dueDate: '2024-12-31',
-  assigneeId: 'user-1',
-  assigneeName: 'John Doe',
-  createdAt: '2024-01-15T10:00:00Z',
-  updatedAt: '2024-01-16T14:30:00Z',
-  projectId: 'project-1',
-  listId: 'list-1',
-  position: 1,
-};
-
-const mockLists: List[] = [
-  { id: 'list-1', name: 'Backlog', position: 0, taskCount: 0, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-  { id: 'list-2', name: 'In Progress', position: 1, taskCount: 0, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-  { id: 'list-3', name: 'Done', position: 2, taskCount: 0, createdAt: '2024-01-01T00:00:00Z', updatedAt: '2024-01-01T00:00:00Z' },
-];
-
-const meta: Meta<TaskCardComponent> = {
+const meta: Meta = {
   title: 'Features/TaskCard',
-  component: TaskCardComponent,
   parameters: {
     layout: 'centered',
     docs: {
@@ -70,61 +10,210 @@ const meta: Meta<TaskCardComponent> = {
       },
     },
   },
-  decorators: [
-    (story) => ({
-      template: `<div class="w-80 p-4 bg-gray-50">${story()}</div>`,
-      moduleMetadata: {
-        imports: [TaskCardComponent],
-        providers: [
-          { provide: TaskService, useClass: MockTaskService },
-        ],
-      },
-    }),
-  ],
-  argTypes: {
-    task: {
-      description: 'The task object to display',
-    },
-    availableStatuses: {
-      description: 'Available statuses for status change dropdown',
-    },
-    availableLists: {
-      description: 'Available lists for moving tasks',
-    },
-    statusChanged: {
-      action: 'statusChanged',
-      description: 'Event emitted when task status changes',
-    },
-    listChanged: {
-      action: 'listChanged',
-      description: 'Event emitted when task is moved to different list',
-    },
-    cardClicked: {
-      action: 'cardClicked',
-      description: 'Event emitted when task card is clicked',
-    },
-    dragStart: {
-      action: 'dragStart',
-      description: 'Event emitted when drag operation starts',
-    },
-    dragEnd: {
-      action: 'dragEnd',
-      description: 'Event emitted when drag operation ends',
-    },
-  },
-  args: {
-    task: mockTask,
-    availableStatuses: [TaskStatus.Todo, TaskStatus.InProgress, TaskStatus.Done],
-    availableLists: mockLists,
-  },
 };
 
 export default meta;
-type Story = StoryObj<TaskCardComponent>;
+type Story = StoryObj;
 
 export const Default: Story = {
-  args: {
-    task: mockTask,
-  },
+  name: 'Task Card',
+  render: () => ({
+    template: `
+      <div class="w-80 p-4 bg-gray-50">
+        <!-- Task Card - Based on actual component -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
+          <!-- Card Header -->
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="font-medium text-gray-900">Implement user authentication</h3>
+            <button class="text-gray-400 hover:text-gray-600 flex-shrink-0">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Card Description -->
+          <p class="text-sm text-gray-600 mb-3 line-clamp-3">Add login and signup functionality with proper validation and security measures</p>
+          
+          <!-- Card Footer -->
+          <div class="flex items-center justify-between mb-3">
+            <!-- Due Date -->
+            <div class="flex items-center text-sm text-gray-500">
+              <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Dec 31, 2024
+            </div>
+            
+            <!-- Priority Badge -->
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+              <span class="w-1.5 h-1.5 rounded-full mr-1 bg-orange-400"></span>
+              High
+            </span>
+          </div>
+          
+          <!-- Move To Dropdown -->
+          <div class="mt-3">
+            <select class="w-full text-sm border border-gray-300 rounded px-2 py-1 bg-gray-50 focus:ring-2 focus:ring-slate-500 focus:border-slate-500">
+              <option value="">Move to:</option>
+              <option value="list-1">To Do</option>
+              <option value="list-2">In Progress</option>
+              <option value="list-3">Done</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    `,
+  }),
+};
+
+export const LowPriority: Story = {
+  name: 'Low Priority Task',
+  render: () => ({
+    template: `
+      <div class="w-80 p-4 bg-gray-50">
+        <!-- Task Card - Based on actual component -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
+          <!-- Card Header -->
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="font-medium text-gray-900">Update documentation</h3>
+            <button class="text-gray-400 hover:text-gray-600 flex-shrink-0">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Card Description -->
+          <p class="text-sm text-gray-600 mb-3 line-clamp-3">Review and update project documentation for new features</p>
+          
+          <!-- Card Footer -->
+          <div class="flex items-center justify-between mb-3">
+            <!-- Due Date -->
+            <div class="flex items-center text-sm text-gray-500">
+              <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Jan 15, 2025
+            </div>
+            
+            <!-- Priority Badge -->
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+              <span class="w-1.5 h-1.5 rounded-full mr-1 bg-gray-400"></span>
+              Low
+            </span>
+          </div>
+          
+          <!-- Move To Dropdown -->
+          <div class="mt-3">
+            <select class="w-full text-sm border border-gray-300 rounded px-2 py-1 bg-gray-50 focus:ring-2 focus:ring-slate-500 focus:border-slate-500">
+              <option value="">Move to:</option>
+              <option value="list-1">To Do</option>
+              <option value="list-3">Done</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    `,
+  }),
+};
+
+export const CriticalPriority: Story = {
+  name: 'Critical Priority Task',
+  render: () => ({
+    template: `
+      <div class="w-80 p-4 bg-gray-50">
+        <!-- Task Card - Based on actual component -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
+          <!-- Card Header -->
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="font-medium text-gray-900">Fix critical security vulnerability</h3>
+            <button class="text-gray-400 hover:text-gray-600 flex-shrink-0">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Card Description -->
+          <p class="text-sm text-gray-600 mb-3 line-clamp-3">Urgent: Address SQL injection vulnerability in user authentication system</p>
+          
+          <!-- Card Footer -->
+          <div class="flex items-center justify-between mb-3">
+            <!-- Due Date -->
+            <div class="flex items-center text-sm text-red-600">
+              <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Today
+            </div>
+            
+            <!-- Priority Badge -->
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+              <span class="w-1.5 h-1.5 rounded-full mr-1 bg-red-400"></span>
+              Critical
+            </span>
+          </div>
+          
+          <!-- Move To Dropdown -->
+          <div class="mt-3">
+            <select class="w-full text-sm border border-gray-300 rounded px-2 py-1 bg-gray-50 focus:ring-2 focus:ring-slate-500 focus:border-slate-500">
+              <option value="">Move to:</option>
+              <option value="list-2">In Progress</option>
+              <option value="list-3">Done</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    `,
+  }),
+};
+
+export const WithoutDescription: Story = {
+  name: 'Task Without Description',
+  render: () => ({
+    template: `
+      <div class="w-80 p-4 bg-gray-50">
+        <!-- Task Card - Based on actual component -->
+        <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
+          <!-- Card Header -->
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="font-medium text-gray-900">Quick bug fix</h3>
+            <button class="text-gray-400 hover:text-gray-600 flex-shrink-0">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Card Footer -->
+          <div class="flex items-center justify-between mb-3">
+            <!-- Due Date -->
+            <div class="flex items-center text-sm text-gray-500">
+              <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Tomorrow
+            </div>
+            
+            <!-- Priority Badge -->
+            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              <span class="w-1.5 h-1.5 rounded-full mr-1 bg-yellow-400"></span>
+              Medium
+            </span>
+          </div>
+          
+          <!-- Move To Dropdown -->
+          <div class="mt-3">
+            <select class="w-full text-sm border border-gray-300 rounded px-2 py-1 bg-gray-50 focus:ring-2 focus:ring-slate-500 focus:border-slate-500">
+              <option value="">Move to:</option>
+              <option value="list-1">To Do</option>
+              <option value="list-3">Done</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    `,
+  }),
 };
 

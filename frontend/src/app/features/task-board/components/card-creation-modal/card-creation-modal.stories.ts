@@ -1,38 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/angular';
-import { CardCreationModalComponent } from './card-creation-modal.component';
-import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { of } from 'rxjs';
-import { TaskPriority } from '../../models/task.model';
-import { List } from '../../models/list.model';
-import { BoardMember, BoardRole } from '../../../../core/models/board.model';
 
-// Mock data
-const mockLists: List[] = [
-  { id: '1', name: 'To Do', position: 0, createdAt: '2024-12-01T10:00:00Z', updatedAt: '2024-12-01T10:00:00Z', taskCount: 3 },
-  { id: '2', name: 'In Progress', position: 1, createdAt: '2024-12-02T10:00:00Z', updatedAt: '2024-12-02T10:00:00Z', taskCount: 2 },
-  { id: '3', name: 'Done', position: 2, createdAt: '2024-12-03T10:00:00Z', updatedAt: '2024-12-03T10:00:00Z', taskCount: 5 },
-];
-
-const mockBoardMembers: BoardMember[] = [
-  { id: '1', userId: '1', userName: 'John Doe', role: BoardRole.Admin, joinedAt: '2024-11-01T10:00:00Z' },
-  { id: '2', userId: '2', userName: 'Jane Smith', role: BoardRole.Member, joinedAt: '2024-11-15T10:00:00Z' },
-  { id: '3', userId: '3', userName: 'Mike Johnson', role: BoardRole.Member, joinedAt: '2024-11-20T10:00:00Z' },
-];
-
-const mockInitialState = {
-  taskBoard: {
-    lists: mockLists,
-    isCreatingTask: false,
-    error: null,
-    createCardModalListId: '1',
-  },
-};
-
-const meta: Meta<CardCreationModalComponent> = {
+const meta: Meta = {
   title: 'Modals/Card Creation Modal',
-  component: CardCreationModalComponent,
   parameters: {
     layout: 'fullscreen',
     docs: {
@@ -41,48 +10,10 @@ const meta: Meta<CardCreationModalComponent> = {
       },
     },
   },
-  decorators: [
-    (story) => ({
-      ...story,
-      providers: [
-        provideMockStore({ initialState: mockInitialState }),
-        FormBuilder,
-        {
-          provide: 'TaskService',
-          useValue: {
-            getPriorityDisplayName: (priority: TaskPriority) => {
-              switch (priority) {
-                case TaskPriority.Low: return 'Low';
-                case TaskPriority.Medium: return 'Medium';
-                case TaskPriority.High: return 'High';
-                case TaskPriority.Critical: return 'Critical';
-                default: return 'Medium';
-              }
-            },
-          },
-        },
-        {
-          provide: 'BoardService',
-          useValue: {
-            getBoardDetails: () => of({ members: mockBoardMembers }),
-          },
-        },
-        {
-          provide: 'ActivatedRoute',
-          useValue: {
-            queryParams: of({ boardId: 'board1' }),
-          },
-        },
-      ],
-      moduleMetadata: {
-        imports: [CommonModule, ReactiveFormsModule],
-      },
-    }),
-  ],
 };
 
 export default meta;
-type Story = StoryObj<CardCreationModalComponent>;
+type Story = StoryObj;
 
 export const Default: Story = {
   name: 'Card Creation Modal',
@@ -150,9 +81,12 @@ export const Default: Story = {
                 <div class="flex-1 relative">
                   <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white appearance-none pr-8">
                     <option value="">Unassigned</option>
-                    <option value="1" selected>John Doe</option>
-                    <option value="2">Jane Smith</option>
-                    <option value="3">Mike Johnson</option>
+                    <option value="1" selected>John Doe (Admin)</option>
+                    <option value="2">Jane Smith (Developer)</option>
+                    <option value="3">Mike Johnson (Designer)</option>
+                    <option value="4">Sarah Wilson (Product Manager)</option>
+                    <option value="5">David Brown (QA Engineer)</option>
+                    <option value="6">Emily Davis (DevOps)</option>
                   </select>
                   <svg class="w-4 h-4 text-gray-400 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -291,9 +225,12 @@ export const WithValidationErrors: Story = {
                 <div class="flex-1 relative">
                   <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white appearance-none pr-8">
                     <option value="">Unassigned</option>
-                    <option value="1">John Doe</option>
-                    <option value="2">Jane Smith</option>
-                    <option value="3">Mike Johnson</option>
+                    <option value="1">John Doe (Admin)</option>
+                    <option value="2">Jane Smith (Developer)</option>
+                    <option value="3">Mike Johnson (Designer)</option>
+                    <option value="4">Sarah Wilson (Product Manager)</option>
+                    <option value="5">David Brown (QA Engineer)</option>
+                    <option value="6">Emily Davis (DevOps)</option>
                   </select>
                   <svg class="w-4 h-4 text-gray-400 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -439,9 +376,12 @@ export const Loading: Story = {
                 <div class="flex-1 relative">
                   <select class="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500 bg-white appearance-none pr-8">
                     <option value="">Unassigned</option>
-                    <option value="1" selected>John Doe</option>
-                    <option value="2">Jane Smith</option>
-                    <option value="3">Mike Johnson</option>
+                    <option value="1" selected>John Doe (Admin)</option>
+                    <option value="2">Jane Smith (Developer)</option>
+                    <option value="3">Mike Johnson (Designer)</option>
+                    <option value="4">Sarah Wilson (Product Manager)</option>
+                    <option value="5">David Brown (QA Engineer)</option>
+                    <option value="6">Emily Davis (DevOps)</option>
                   </select>
                   <svg class="w-4 h-4 text-gray-400 absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>

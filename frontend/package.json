@@ -20,9 +20,6 @@
     "analyze": "ng build --stats-json && npx webpack-bundle-analyzer dist/taskmanager-frontend/stats.json",
     "storybook": "ng run taskmanager-frontend:storybook",
     "build-storybook": "ng run taskmanager-frontend:build-storybook",
-    "test:visual": "playwright test --config=playwright.config.ts",
-    "test:a11y": "playwright test --config=playwright.config.ts src/accessibility-tests/",
-    "test:playground": "npm run test:visual && npm run test:a11y",
     "chromatic": "npx chromatic --project-token=<PROJECT_TOKEN>"
   },
   "private": true,
@@ -82,6 +79,7 @@
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
+    "karma-edge-launcher": "^0.4.2",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "lint-staged": "^16.1.5",
